@@ -1,5 +1,6 @@
 import asyncio
 from pprint import pprint
+from typing import Optional
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QShowEvent, QPixmap, QPalette, QBrush, QPainter
@@ -133,7 +134,7 @@ class UserCard(QFrame):
     def __init__(self):
         super().__init__()
         self.setup_ui()
-        self.background_image: QPixmap = None
+        self.background_image: Optional[QPixmap] = None
 
     def setup_ui(self):
         self.setFixedHeight(250)

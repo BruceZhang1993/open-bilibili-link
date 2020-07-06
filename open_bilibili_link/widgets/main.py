@@ -20,7 +20,6 @@ class AppMainWindow(QMainWindow):
         self.h_layout = None
         self.menu_area: QListView
         self.menu_model: QStandardItemModel
-        self._about_to_close = False
         self.pages = {}
         self.setup_ui()
 
@@ -43,9 +42,9 @@ class AppMainWindow(QMainWindow):
         menu_layout = QVBoxLayout()
         menu_frame = MenuFrame(window=self)
         menu_frame.setLayout(menu_layout)
-        self.menu_area = MenuView()
+        self.menu_area = MenuView(self)
         # self.menu_model = QStringListModel()
-        self.down_menu = MenuView()
+        self.down_menu = MenuView(self, role='down', target=self)
         self.menu_model = QStandardItemModel()
         self.menu_strings = ['home', 'test']
         self.menu_icons = [QIcon.fromTheme('home'), QIcon.fromTheme('configurator')]
@@ -79,8 +78,7 @@ class AppMainWindow(QMainWindow):
         self.setCentralWidget(central)
 
     def action_trigger(self, current: QItemSelection, previous: QItemSelection):
-        if self.down_menu_strings[current.first().indexes()[0].row()] == 'exit':
-            self.close()
+        pass
 
     def switch_page(self, current: QItemSelection, previous: QItemSelection):
         try:
