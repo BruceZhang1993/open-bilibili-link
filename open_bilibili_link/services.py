@@ -69,9 +69,10 @@ class BilibiliBaseService:
     DANMU_API_HOST = 'livecmt-2.bilibili.com'
 
     # 项目默认配置
-    TOKEN_FILE = Path.home() / '.cache' / 'OBL' / 'token.json'
-    FACE_CACHE_DIR = Path.home() / '.cache' / 'OBL' / 'faces'
-    IMAGE_CACHE_DIR = Path.home() / '.cache' / 'OBL' / 'images'
+    CACHE_DIR = Path.home() / '.cache' / 'OBL'
+    TOKEN_FILE = CACHE_DIR / 'token.json'
+    FACE_CACHE_DIR = CACHE_DIR / 'faces'
+    IMAGE_CACHE_DIR = CACHE_DIR / 'images'
 
     def __init__(self):
         self.cookie_jar = CookieJar()
@@ -240,14 +241,15 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
     async def get_cached_background(cls, roominfo: RoomInfoData):
         target = cls.IMAGE_CACHE_DIR / f'{roominfo.room_id}.jpg'
         if target.exists():
-            return target.as_posix()
+            with open(target.as_posix(), 'rb') as f:
+                return f.read()
         target.parent.mkdir(parents=True)
         async with cls().session.get(roominfo.background) as r:
             with open(target.as_posix(), 'wb') as f:
                 data = await r.content.read()
                 f.write(data)
                 f.flush()
-            return target.as_posix()
+            return data
 
     @property
     async def roomid(self):

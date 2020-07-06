@@ -27,7 +27,9 @@ class LoginPanel(QDialog):
         header.setFixedHeight(90)
         header.setObjectName('login-header')
         self.username = QLineEdit()
+        self.username.setPlaceholderText('Mobile/Email')
         self.password = QLineEdit()
+        self.password.setPlaceholderText('Password')
         self.password.setEchoMode(QLineEdit.Password)
         self.commit = QClickableLabel('LOGIN')
         self.commit.setObjectName('login-commit')
@@ -60,6 +62,9 @@ class LoginPanel(QDialog):
         if not BilibiliLiveService().logged_in:
             username = self.username.text().strip()
             password = self.password.text().strip()
+            if username == '' or password == '':
+                Toast.toast(self, '请输入帐号信息')
+                return
             try:
                 await BilibiliLiveService().login(username, password)
                 self.parent().login_complete.emit()

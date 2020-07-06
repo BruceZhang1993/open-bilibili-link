@@ -2,7 +2,7 @@ import asyncio
 from pprint import pprint
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QShowEvent, QPixmap, QPalette, QBrush
+from PyQt5.QtGui import QShowEvent, QPixmap, QPalette, QBrush, QPainter
 from PyQt5.QtWidgets import QFrame, QHBoxLayout, QSizePolicy, QVBoxLayout, QGridLayout, QLabel, QPushButton, \
     QPlainTextEdit, QLineEdit
 from asyncqt import asyncSlot
@@ -133,9 +133,10 @@ class UserCard(QFrame):
     def __init__(self):
         super().__init__()
         self.setup_ui()
+        self.background_image: QPixmap = None
 
     def setup_ui(self):
-        self.setFixedHeight(400)
+        self.setFixedHeight(250)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.main_card = UserCardMain(self)
@@ -147,8 +148,19 @@ class UserCard(QFrame):
     def show_data(self):
         asyncio.gather(self.load_info())
 
-    def set_background(self, path):
-        self.setStyleSheet(f'UserCard {{ border-image: url({path}) 0 0 0 0 stretch stretch; }}')
+    def paintEvent(self, _):
+        if self.background_image:
+            painter = QPainter(self)
+            self.background_image.scaled(self.width(), self.height(), Qt.KeepAspectRatioByExpanding)
+            self.background_image.rect().moveCenter(self.rect().center())
+            painter.drawPixmap(self.background_image.rect().topLeft(), self.background_image)
+
+    def set_background(self, data):
+        pixmap = QPixmap()
+        pixmap.loadFromData(data)
+        pixmap = pixmap.scaled(self.width(), self.height(), Qt.KeepAspectRatioByExpanding)
+        self.background_image = pixmap
+        self.repaint()
 
     async def load_info(self):
         if BilibiliLiveService().logged_in:
