@@ -1,18 +1,22 @@
 import asyncio
 from pprint import pprint
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QShowEvent, QPixmap, QPalette, QBrush
 from PyQt5.QtWidgets import QFrame, QHBoxLayout, QSizePolicy, QVBoxLayout, QGridLayout, QLabel, QPushButton, \
     QPlainTextEdit, QLineEdit
 from asyncqt import asyncSlot
 
 from open_bilibili_link.services import BilibiliLiveService
+from open_bilibili_link.widgets.components.dialog import LoginPanel
+from open_bilibili_link.widgets.components.label import QClickableLabel
 
 
 class UserCardMain(QFrame):
-    def __init__(self):
-        super().__init__()
+    login_complete = pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.setup_ui()
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
 
@@ -23,7 +27,7 @@ class UserCardMain(QFrame):
         self.avatar.setMaximumSize(70, 70)
         self.glayout.addWidget(self.avatar, 0, 0)
         rlayout = QVBoxLayout()
-        self.label_username = QLabel('Login')
+        self.label_username = QClickableLabel('LOGIN')
         self.label_username.setObjectName('label-username')
         self.label_bio = QLabel('')
         self.label_bio.setObjectName('label-bio')
@@ -34,6 +38,12 @@ class UserCardMain(QFrame):
         rlayout.addWidget(self.label_bio)
         self.glayout.addLayout(rlayout, 0, 1)
         self.setLayout(self.glayout)
+        self.label_username.clicked.connect(self.show_login)
+        self.login_complete.connect(self.after_login)
+
+    @asyncSlot()
+    async def after_login(self):
+        self.parent().show_data()
 
     def set_user_info(self, userinfo):
         print(userinfo)
@@ -52,10 +62,16 @@ class UserCardMain(QFrame):
         pixmap.loadFromData(avatar)
         self.avatar.setPixmap(pixmap.scaledToWidth(self.avatar.width(), Qt.SmoothTransformation))
 
+    @asyncSlot()
+    async def show_login(self):
+        if not BilibiliLiveService().logged_in:
+            panel = LoginPanel(self)
+            panel.show()
+
 
 class UserCardLive(QFrame):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.setup_ui()
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
 
@@ -67,10 +83,11 @@ class UserCardLive(QFrame):
         self.top_label.setObjectName('room-info-title')
         self.label_roomid = QLabel('')
         title_row = QHBoxLayout()
-        self.label_title = QLabel('房间标题:')
+        self.label_title = QLabel('')
         self.label_title_content = QLineEdit()
         self.label_title_content.setReadOnly(True)
         self.label_title_edit = QPushButton('修改')
+        self.label_title_edit.hide()
         self.label_title_edit.setObjectName('label-title-edit')
         self.label_title_edit.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         title_row.addWidget(self.label_title)
@@ -121,8 +138,8 @@ class UserCard(QFrame):
         self.setFixedHeight(400)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        self.main_card = UserCardMain()
-        self.right_card = UserCardLive()
+        self.main_card = UserCardMain(self)
+        self.right_card = UserCardLive(self)
         layout.addWidget(self.main_card, stretch=3)
         layout.addWidget(self.right_card, stretch=2)
         self.setLayout(layout)
@@ -135,6 +152,8 @@ class UserCard(QFrame):
 
     async def load_info(self):
         if BilibiliLiveService().logged_in:
+            self.right_card.label_title.setText('房间标题:')
+            self.right_card.label_title_edit.show()
             user_info = await BilibiliLiveService().get_user_info()
             room = await BilibiliLiveService().get_room_info()
             self.main_card.set_user_info(user_info)

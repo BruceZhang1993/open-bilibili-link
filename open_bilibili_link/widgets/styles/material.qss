@@ -447,3 +447,10 @@ QScrollArea {
 #room-info-title { font-weight: 600; font-size: 20; color: #aaa; }
 #user-card-live { color: #ccc!important; }
 #label-title-edit { background: transparent; border-bottom-width: 1px; border-bottom-color: skyblue; }
+
+LoginPanel QLineEdit { border-bottom-width: 1px; border-bottom-color: #4b7f87; margin-top: 30px; }
+LoginPanel QLineEdit:focus { border-bottom-color: #78d1cd; }
+#login-header { font-weight: 700; color: #78d1cd; font-size: 24px; }
+#login-commit { color: rgba(120, 209, 205, .5); margin-top: 30px; }
+
+Toast { background: #c0f0e9; color: #3468c8; font-size: 12px; }

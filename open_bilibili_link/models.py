@@ -59,7 +59,8 @@ class LoginData(BaseModel):
     sso: List[str]
 
     def save_to_file(self, path: Path):
-        path.parent.mkdir(parents=True)
+        if not path.parent.exists():
+            path.parent.mkdir(parents=True)
         with open(path.as_posix(), 'w') as f:
             f.write(self.json())
             f.flush()
@@ -193,7 +194,8 @@ class HashKeyResponse(BaseResponse):
 
 
 class LoginResponse(BaseResponse):
-    data: LoginData
+    message: Optional[str]
+    data: Optional[LoginData]
 
 
 class UserInfoResponse(BaseResponseV2):

@@ -142,7 +142,7 @@ class BilibiliBaseService:
         hash_data = await self.get_hash()
         if not hash_data:
             raise BilibiliServiceException('get hash failed', -90000)
-        uri = f'https://{self.PASSPORT_API_HOST}/api/v2/oauth2/login'
+        uri = f'https://{self.PASSPORT_API_HOST}/api/v3/oauth2/login'
         param = f"appkey={self.APPKEY}&password=" \
                 f"{quote_plus(b64encode(rsa.encrypt(f'{hash_data.hash}{password}'.encode(), hash_data.pubkey)))}" \
                 f"&username={quote_plus(username)}"
@@ -152,7 +152,9 @@ class BilibiliBaseService:
         async with self.session.post(uri, data=data, headers=headers) as r:
             res = models.LoginResponse(**(await r.json()))
             if res.code != 0:
-                raise BilibiliServiceException('', res.code)
+                raise BilibiliServiceException(res.message or '', res.code)
+            res.data.save_to_file(self.TOKEN_FILE)
+            self.token_data = res.data
             return res.data
 
     @login_required
