@@ -13,9 +13,10 @@ from open_bilibili_link.widgets.routes import RouteManager
 class AppMainWindow(QMainWindow):
     DEFAULT_HOME = 'obl://home'
 
-    def __init__(self, app: QApplication):
+    def __init__(self, app: QApplication, args):
         super().__init__()
         self.app = app
+        self.args = args
         self.content_area = None
         self.h_layout = None
         self.menu_area: QListView
@@ -73,7 +74,10 @@ class AppMainWindow(QMainWindow):
         self.h_layout.setContentsMargins(0, 0, 0, 0)
         menu_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.goto('obl://home')
+        if self.args.uri:
+            self.goto(self.args.uri)
+        else:
+            self.goto('obl://home')
         central.setLayout(self.h_layout)
         self.setCentralWidget(central)
 

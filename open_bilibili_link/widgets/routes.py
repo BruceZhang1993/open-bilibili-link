@@ -13,7 +13,7 @@ class RouteManager:
         if not uri.startswith(SCHEMA):
             raise RouteException('Not a valid uri')
         segments = uri.replace(SCHEMA, '').split('/')
-        module = importlib.import_module('open_bilibili_link.widgets.pages.' + '.'.join(segments))
+        module = importlib.import_module(f'{__package__}.pages.' + '.'.join(segments))
         return getattr(module, f'{segments[-1].capitalize()}Page')
 
     @staticmethod
