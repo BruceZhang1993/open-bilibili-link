@@ -1,0 +1,17 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pyqt5-stubs = "*"
+
+[packages]
+asyncqt = "*"
+pyqt5 = "*"
+aiohttp = "*"
+rsa = "*"
+pydantic = "*"
+
+[requires]
+python_version = "3.8"
