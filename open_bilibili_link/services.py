@@ -238,6 +238,11 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         return await ping(self.host)
 
     @classmethod
+    async def get_image(cls, url):
+        async with cls().session.get(url) as r:
+            return await r.content.read()
+
+    @classmethod
     async def get_cached_background(cls, roominfo: RoomInfoData):
         target = cls.IMAGE_CACHE_DIR / f'{roominfo.room_id}.jpg'
         if target.exists():

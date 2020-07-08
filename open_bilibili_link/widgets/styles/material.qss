@@ -109,7 +109,7 @@ QComboBox {
 }
 
 QComboBox QAbstractItemView
-{    
+{
     selection-background-color: transparent;
 	outline: 0;
 }
@@ -145,7 +145,7 @@ QCheckBox::indicator:disabled, QRadioButton::indicator:disabled, QTreeView::indi
 	background-color: #444444;			/* Not sure what this looks like */
 }
 
-QCheckBox::indicator::checked:disabled, QRadioButton::indicator::checked:disabled, QTreeView::indicator::checked:disabled {  
+QCheckBox::indicator::checked:disabled, QRadioButton::indicator::checked:disabled, QTreeView::indicator::checked:disabled {
 	background-color: qradialgradient(cx:0.5, cy:0.5, fx:0.25, fy:0.15, radius:0.3, stop:0 #BBBBBB, stop:1 #444444); /* Not sure what this looks like */
 }
 
@@ -444,6 +444,7 @@ QScrollArea {
 #label-username { font-weight: 700; font-size: 22; color: #ccc;}
 #label-bio {font-weight: 300; font-size: 18; color: #aaa;}
 #label-stat {font-weight: 400; font-size: 20; color: #aaa;}
+#label-birth {font-weight: 400; font-size: 18; color: #ccc;}
 #room-info-title { font-weight: 600; font-size: 20; color: #aaa; }
 #user-card-live { color: #ccc!important; }
 #label-title-edit { background: transparent; border-bottom-width: 1px; border-bottom-color: skyblue; }

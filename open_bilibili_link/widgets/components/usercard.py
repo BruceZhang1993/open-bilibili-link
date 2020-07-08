@@ -1,16 +1,17 @@
 import asyncio
+from datetime import timezone
 from pprint import pprint
 from typing import Optional
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QShowEvent, QPixmap, QPalette, QBrush, QPainter
+from PyQt5.QtGui import QPixmap, QPainter
 from PyQt5.QtWidgets import QFrame, QHBoxLayout, QSizePolicy, QVBoxLayout, QGridLayout, QLabel, QPushButton, \
-    QPlainTextEdit, QLineEdit
+    QLineEdit
 from asyncqt import asyncSlot
 
 from open_bilibili_link.services import BilibiliLiveService
 from open_bilibili_link.widgets.components.dialog import LoginPanel
-from open_bilibili_link.widgets.components.label import QClickableLabel
+from open_bilibili_link.widgets.components.label import QClickableLabel, KeyframeLabel
 
 
 class UserCardMain(QFrame):
@@ -23,10 +24,13 @@ class UserCardMain(QFrame):
 
     def setup_ui(self):
         self.glayout = QGridLayout()
-        self.glayout.setAlignment(Qt.AlignTop)
+        self.glayout.setHorizontalSpacing(15)
+        self.glayout.setVerticalSpacing(20)
+        self.glayout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.avatar = QLabel()
-        self.avatar.setMaximumSize(70, 70)
-        self.glayout.addWidget(self.avatar, 0, 0)
+        self.avatar.setObjectName('label-avatar')
+        self.avatar.setFixedSize(70, 70)
+        self.glayout.addWidget(self.avatar, 0, 0, Qt.AlignTop)
         rlayout = QVBoxLayout()
         self.label_username = QClickableLabel('LOGIN')
         self.label_username.setObjectName('label-username')
@@ -34,10 +38,14 @@ class UserCardMain(QFrame):
         self.label_bio.setObjectName('label-bio')
         self.label_stat = QLabel('')
         self.label_stat.setObjectName('label-stat')
+        self.label_birth = QLabel('')
+        self.label_birth.setObjectName('label-birth')
         rlayout.addWidget(self.label_username)
         rlayout.addWidget(self.label_stat)
         rlayout.addWidget(self.label_bio)
-        self.glayout.addLayout(rlayout, 0, 1)
+        rlayout.addWidget(self.label_birth)
+        rlayout.setAlignment(Qt.AlignTop)
+        self.glayout.addLayout(rlayout, 0, 1, Qt.AlignTop)
         self.setLayout(self.glayout)
         self.label_username.clicked.connect(self.show_login)
         self.login_complete.connect(self.after_login)
@@ -57,6 +65,8 @@ class UserCardMain(QFrame):
         self.label_username.setText(f'{sex_icon}{userinfo.name}  (UID#{userinfo.mid}) Lv{userinfo.level}')
         self.label_bio.setText(userinfo.sign)
         self.label_stat.setText(f'Follow: {userinfo.following} Fans: {userinfo.follower} Coins: {userinfo.coins}')
+        self.label_birth.setText(
+            f'Birth: {userinfo.birthday.replace(tzinfo=timezone.utc).astimezone(tz=None).strftime("%Y-%m-%d")}')
 
     def set_avatar(self, avatar):
         pixmap = QPixmap()
@@ -80,6 +90,9 @@ class UserCardLive(QFrame):
         self.setStyleSheet('QLabel { color: #ccc; }')
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
+        self.label_keyframe = KeyframeLabel()
+        self.label_keyframe.setFixedSize(180, 100)
+        self.label_keyframe.hide()
         self.top_label = QLabel('')
         self.top_label.setObjectName('room-info-title')
         self.label_roomid = QLabel('')
@@ -99,7 +112,8 @@ class UserCardLive(QFrame):
         self.label_roomid.setTextFormat(Qt.RichText)
         self.label_roomid.setTextInteractionFlags(Qt.TextBrowserInteraction)
         self.label_roomid.setOpenExternalLinks(True)
-        layout.addWidget(self.top_label)
+        layout.addWidget(self.label_keyframe)
+        # layout.addWidget(self.top_label)
         layout.addWidget(self.label_roomid)
         # layout.addWidget(self.label_title)
         layout.addLayout(title_row)
@@ -121,13 +135,21 @@ class UserCardLive(QFrame):
             self.label_title_content.setReadOnly(True)
             self.label_title_edit.setEnabled(True)
 
-    def set_room_info(self, room_info):
+    async def set_room_info(self, room_info):
         pprint(room_info)
-        self.top_label.setText('直播中' if room_info.live_status else '未开播')
-        self.label_roomid.setText(f'房间号: {room_info.room_id} <a href="https://live.bilibili.com/{room_info.room_id}">Go</a>')
+        # self.top_label.setText('直播中' if room_info.live_status else '未开播')
+        self.label_roomid.setText(
+            f'房间号: {room_info.room_id} <a href="https://live.bilibili.com/{room_info.room_id}">Go</a>')
         self.label_title_content.setText(f'{room_info.title}')
         self.label_desc.setText(f'个人简介: {room_info.description}')
         self.label_area.setText(f'直播分区: {room_info.parent_area_name}/{room_info.area_name}')
+        pixmap = QPixmap()
+        pixmap.loadFromData(await BilibiliLiveService.get_image(room_info.keyframe))
+        self.label_keyframe.setPixmap(pixmap.scaled(self.label_keyframe.width(), self.label_keyframe.height(),
+                                                    Qt.KeepAspectRatioByExpanding))
+        self.label_keyframe.show()
+        self.label_keyframe.live_status_text = '直播中' if room_info.live_status else '未开播';
+        self.label_keyframe.repaint()
 
 
 class UserCard(QFrame):
@@ -137,7 +159,7 @@ class UserCard(QFrame):
         self.background_image: Optional[QPixmap] = None
 
     def setup_ui(self):
-        self.setFixedHeight(250)
+        self.setFixedHeight(280)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.main_card = UserCardMain(self)
@@ -171,6 +193,6 @@ class UserCard(QFrame):
             room = await BilibiliLiveService().get_room_info()
             self.main_card.set_user_info(user_info)
             # self.right_card.set_live_info(await BilibiliLiveService().live_info())
-            self.right_card.set_room_info(room)
+            await self.right_card.set_room_info(room)
             self.main_card.set_avatar(await BilibiliLiveService().get_cached_face(user_info))
             self.set_background(await BilibiliLiveService().get_cached_background(room))
