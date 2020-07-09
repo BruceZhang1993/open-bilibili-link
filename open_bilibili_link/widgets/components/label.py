@@ -12,6 +12,7 @@ class QClickableLabel(QLabel):
 
 class KeyframeLabel(QLabel):
     live_status_text = ''
+    live_online = '...'
 
     def paintEvent(self, e):
         super().paintEvent(e)
@@ -20,4 +21,5 @@ class KeyframeLabel(QLabel):
             painter.setPen(Qt.white)
             painter.setFont(QFont('sans-serif', 10))
             painter.fillRect(self.rect(), QBrush(QColor(40, 40, 40, 80)))
-            painter.drawText(self.rect().adjusted(5, 0, 0, -5), Qt.AlignLeft | Qt.AlignBottom, self.live_status_text)
+            painter.drawText(self.rect().adjusted(5, 0, -5, -5), Qt.AlignLeft | Qt.AlignBottom, self.live_status_text)
+            painter.drawText(self.rect().adjusted(5, 0, -5, -5), Qt.AlignRight | Qt.AlignBottom, str(self.live_online))

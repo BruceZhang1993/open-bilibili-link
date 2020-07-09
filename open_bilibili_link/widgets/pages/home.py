@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QFrame, QVBoxLayout, QPushButton, QScrollArea, QSize
 from asyncqt import asyncSlot
 
 from open_bilibili_link.services import BilibiliLiveService
+from open_bilibili_link.widgets.components.live import LiveControlCenter
 from open_bilibili_link.widgets.components.usercard import UserCard
 
 
@@ -21,9 +22,12 @@ class HomePage(QFrame):
         inner_layout = QVBoxLayout()
         inner_layout.setAlignment(Qt.AlignTop)
         # area.setStyleSheet('QScrollArea {background: gray;}')
-        usercard = UserCard()
-        usercard.show_data()
-        inner_layout.addWidget(usercard)
+        self.usercard = UserCard()
+        self.usercard.show_data()
+        live_control = LiveControlCenter(homepage=self)
+        live_control.show_data()
+        inner_layout.addWidget(self.usercard)
+        inner_layout.addWidget(live_control)
         area.setLayout(inner_layout)
         layout.addWidget(area)
         area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)

@@ -1,14 +1,11 @@
-import asyncio
 from base64 import b64encode
 from hashlib import md5
 from pathlib import Path
-from pprint import pprint
-from typing import List
+from typing import List, Callable, Optional
 from urllib.parse import quote_plus
 
 import rsa
 from aiohttp import ClientSession, CookieJar, TraceConfig, TraceRequestStartParams
-from pydantic import ValidationError
 
 from open_bilibili_link import models
 from open_bilibili_link.models import UserInfoData, RoomInfoData
@@ -18,7 +15,8 @@ from open_bilibili_link.utils import ping
 def login_required(func):
     """
     验证登录状态装饰器
-    :param func:
+    :param func: 方法
+    :type func: Callable
     :return:
     """
 
@@ -228,6 +226,19 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         super().__init__()
         self.host = self.LIVE_API_HOST
         self._roomid = 0
+        self._live_status = None
+        self._areaid = 0
+
+    @property
+    async def areaid(self):
+        if self._areaid:
+            return self._areaid
+        await self.live_info()
+        return self._areaid
+
+    @areaid.setter
+    def areaid(self, v):
+        self._areaid = v
 
     async def ping(self) -> float:
         """
@@ -268,6 +279,17 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         await self.live_info()
         return self._roomid
 
+    @property
+    async def live_status(self):
+        if self._live_status is not None:
+            return self._live_status
+        await self.get_room_info()
+        return self._live_status
+
+    @live_status.setter
+    def live_status(self, v):
+        self._live_status = v
+
     @login_required
     async def live_info(self) -> models.LiveInfoData:
         """
@@ -292,6 +314,8 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             res = models.RoomInfoResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
+            self._live_status = res.data.live_status
+            self._areaid = res.data.area_id
             return res.data
 
     @login_required
@@ -324,12 +348,12 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             return res.data
 
     @login_required
-    async def start_live(self, areaid) -> models.StartLiveData:
+    async def start_live(self, areaid: Optional[int]) -> models.StartLiveData:
         """
         开始直播
         :raises: BilibiliServiceException
-        :param areaid: 分区 ID
-        :type areaid: int
+        :param areaid: 分区 id
+        :type areaid: Optional[int]
         :return: 开播数据
         :rtype: models.StartLiveData
         """
@@ -338,7 +362,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         data = {
             'room_id': await self.roomid,
             'platform': 'pc',
-            'area_v2': areaid,
+            'area_v2': areaid or (await self.areaid),
             'csrf_token': csrf,
             'csrf': csrf,
         }

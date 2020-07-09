@@ -88,6 +88,9 @@ class UserCardLive(QFrame):
 
     def setup_ui(self):
         self.setStyleSheet('QLabel { color: #ccc; }')
+        hlayout = QGridLayout()
+        hlayout.setHorizontalSpacing(10)
+        hlayout.setAlignment(Qt.AlignTop)
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
         self.label_keyframe = KeyframeLabel()
@@ -112,14 +115,16 @@ class UserCardLive(QFrame):
         self.label_roomid.setTextFormat(Qt.RichText)
         self.label_roomid.setTextInteractionFlags(Qt.TextBrowserInteraction)
         self.label_roomid.setOpenExternalLinks(True)
-        layout.addWidget(self.label_keyframe)
+        # layout.addWidget(self.label_keyframe)
         # layout.addWidget(self.top_label)
         layout.addWidget(self.label_roomid)
         # layout.addWidget(self.label_title)
         layout.addLayout(title_row)
         layout.addWidget(self.label_area)
         layout.addWidget(self.label_desc)
-        self.setLayout(layout)
+        hlayout.addWidget(self.label_keyframe, 0, 0, Qt.AlignTop)
+        hlayout.addLayout(layout, 0, 1, Qt.AlignTop)
+        self.setLayout(hlayout)
         self.label_title_edit.clicked.connect(self.label_title_edit_clicked)
 
     @asyncSlot()
@@ -148,7 +153,8 @@ class UserCardLive(QFrame):
         self.label_keyframe.setPixmap(pixmap.scaled(self.label_keyframe.width(), self.label_keyframe.height(),
                                                     Qt.KeepAspectRatioByExpanding))
         self.label_keyframe.show()
-        self.label_keyframe.live_status_text = '直播中' if room_info.live_status else '未开播';
+        self.label_keyframe.live_status_text = '直播中' if room_info.live_status else '未开播'
+        self.label_keyframe.live_online = room_info.online
         self.label_keyframe.repaint()
 
 
@@ -160,13 +166,16 @@ class UserCard(QFrame):
 
     def setup_ui(self):
         self.setFixedHeight(280)
+        hlayout = QVBoxLayout()
+        hlayout.setAlignment(Qt.AlignTop)
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.main_card = UserCardMain(self)
         self.right_card = UserCardLive(self)
-        layout.addWidget(self.main_card, stretch=3)
-        layout.addWidget(self.right_card, stretch=2)
-        self.setLayout(layout)
+        layout.addWidget(self.right_card, stretch=3)
+        layout.addWidget(self.main_card, stretch=2)
+        hlayout.addLayout(layout)
+        self.setLayout(hlayout)
 
     def show_data(self):
         asyncio.gather(self.load_info())

@@ -6,6 +6,16 @@ import rsa
 from pydantic import BaseModel, validator, Field
 
 
+class OBSServiceData(BaseModel):
+    class Settings(BaseModel):
+        bwtest: bool
+        use_auth: bool
+        server: str
+        key: str
+    type: str
+    settings: Settings
+
+
 class BaseResponse(BaseModel):
     ts: int
     code: int

@@ -1,4 +1,8 @@
 import asyncio
+from pathlib import Path
+
+from open_bilibili_link.models import OBSServiceData
+
 
 async def check_exists(command):
     process = await asyncio.create_subprocess_exec(
@@ -31,3 +35,23 @@ async def ping(host: str) -> float:
             numbers = line.split('=')[1].strip().split('/')
             return float(numbers[1])
     return 0
+
+
+def create_obs_configuration(rtmp, key, profile='BilibiliLive'):
+    target = Path.home() / '.config/obs-studio/basic/profiles' / profile
+    if not target.exists():
+        target.mkdir(parents=True)
+    basic = f'[General]\nName={profile}\n'
+    if not (target / 'basic.ini').exists():
+        with open((target / 'basic.ini').as_posix(), 'w') as f:
+            f.write(basic)
+            f.flush()
+    service = OBSServiceData(type='rtmp_custom', settings={
+        'bwtest': False,
+        'use_auth': False,
+        'server': rtmp,
+        'key': key,
+    })
+    with open((target / 'service.json').as_posix(), 'w') as f:
+        f.write(service.json(indent=4))
+        f.flush()

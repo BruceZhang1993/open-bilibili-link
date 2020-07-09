@@ -455,3 +455,5 @@ LoginPanel QLineEdit:focus { border-bottom-color: #78d1cd; }
 #login-commit { color: rgba(120, 209, 205, .5); margin-top: 30px; }
 
 Toast { background: #c0f0e9; color: #3468c8; font-size: 12px; }
+LiveControlCenter { background: deepskyblue; }
+UserCardMain, UserCardLive { border-bottom-width: 1px; border-bottom-color: skyblue; }
