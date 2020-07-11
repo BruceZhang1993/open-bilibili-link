@@ -447,7 +447,7 @@ QScrollArea {
 #label-birth {font-weight: 400; font-size: 18; color: #ccc;}
 #room-info-title { font-weight: 600; font-size: 20; color: #aaa; }
 #user-card-live { color: #ccc!important; }
-#label-title-edit { background: transparent; border-bottom-width: 1px; border-bottom-color: skyblue; }
+#label-title-edit, #label-label-edit { background: transparent; border-bottom-width: 1px; border-bottom-color: skyblue; }
 
 LoginPanel QLineEdit { border-bottom-width: 1px; border-bottom-color: #4b7f87; margin-top: 30px; }
 LoginPanel QLineEdit:focus { border-bottom-color: #78d1cd; }

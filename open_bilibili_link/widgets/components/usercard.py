@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QFrame, QHBoxLayout, QSizePolicy, QVBoxLayout, QGrid
 from asyncqt import asyncSlot
 
 from open_bilibili_link.services import BilibiliLiveService
+from open_bilibili_link.widgets.components.areas import AreaSelector
 from open_bilibili_link.widgets.components.dialog import LoginPanel
 from open_bilibili_link.widgets.components.label import QClickableLabel, KeyframeLabel
 
@@ -99,6 +100,8 @@ class UserCardLive(QFrame):
         self.top_label = QLabel('')
         self.top_label.setObjectName('room-info-title')
         self.label_roomid = QLabel('')
+
+        # 直播标题行
         title_row = QHBoxLayout()
         self.label_title = QLabel('')
         self.label_title_content = QLineEdit()
@@ -110,7 +113,19 @@ class UserCardLive(QFrame):
         title_row.addWidget(self.label_title)
         title_row.addWidget(self.label_title_content)
         title_row.addWidget(self.label_title_edit)
+
+        # 直播分区行
+        area_row = QHBoxLayout()
         self.label_area = QLabel('')
+        self.label_area_content = QLabel('')
+        self.label_area_edit = QPushButton('修改')
+        self.label_area_edit.setObjectName('label-label-edit')
+        self.label_area_edit.hide()
+        self.label_area_edit.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        area_row.addWidget(self.label_area)
+        area_row.addWidget(self.label_area_content)
+        area_row.addWidget(self.label_area_edit)
+
         self.label_desc = QLabel('')
         self.label_roomid.setTextFormat(Qt.RichText)
         self.label_roomid.setTextInteractionFlags(Qt.TextBrowserInteraction)
@@ -120,12 +135,18 @@ class UserCardLive(QFrame):
         layout.addWidget(self.label_roomid)
         # layout.addWidget(self.label_title)
         layout.addLayout(title_row)
-        layout.addWidget(self.label_area)
+        layout.addLayout(area_row)
         layout.addWidget(self.label_desc)
         hlayout.addWidget(self.label_keyframe, 0, 0, Qt.AlignTop)
         hlayout.addLayout(layout, 0, 1, Qt.AlignTop)
         self.setLayout(hlayout)
         self.label_title_edit.clicked.connect(self.label_title_edit_clicked)
+        self.label_area_edit.clicked.connect(self.label_area_edit_clicked)
+
+    def label_area_edit_clicked(self):
+        selector = AreaSelector()
+        selector.show_data()
+        selector.exec()
 
     @asyncSlot()
     async def label_title_edit_clicked(self):
@@ -147,7 +168,7 @@ class UserCardLive(QFrame):
             f'房间号: {room_info.room_id} <a href="https://live.bilibili.com/{room_info.room_id}">Go</a>')
         self.label_title_content.setText(f'{room_info.title}')
         self.label_desc.setText(f'个人简介: {room_info.description}')
-        self.label_area.setText(f'直播分区: {room_info.parent_area_name}/{room_info.area_name}')
+        self.label_area_content.setText(f'{room_info.parent_area_name}/{room_info.area_name}')
         pixmap = QPixmap()
         pixmap.loadFromData(await BilibiliLiveService.get_image(room_info.keyframe))
         self.label_keyframe.setPixmap(pixmap.scaled(self.label_keyframe.width(), self.label_keyframe.height(),
@@ -197,7 +218,9 @@ class UserCard(QFrame):
     async def load_info(self):
         if BilibiliLiveService().logged_in:
             self.right_card.label_title.setText('房间标题:')
+            self.right_card.label_area.setText('分区信息:')
             self.right_card.label_title_edit.show()
+            self.right_card.label_area_edit.show()
             user_info = await BilibiliLiveService().get_user_info()
             room = await BilibiliLiveService().get_room_info()
             self.main_card.set_user_info(user_info)

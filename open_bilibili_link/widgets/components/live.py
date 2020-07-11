@@ -1,11 +1,13 @@
 import asyncio
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QPushButton
 from asyncqt import asyncSlot
 
 from open_bilibili_link.services import BilibiliLiveService
 from open_bilibili_link.utils import create_obs_configuration, check_exists, run_command
 from open_bilibili_link.widgets.components.button import CopyButton
+from open_bilibili_link.widgets.components.danmu import DanmuWidget
 from open_bilibili_link.widgets.components.toast import Toast
 
 
@@ -25,25 +27,30 @@ class LiveControlCenter(QFrame):
         self.live_rtmp.setReadOnly(True)
         self.live_code = QLineEdit()
         self.live_code.setReadOnly(True)
+        self.live_code.setEchoMode(QLineEdit.Password)
         self.live_rtmp_copy = CopyButton('复制', target=self.live_rtmp)
         self.live_code_copy = CopyButton('复制', target=self.live_code)
+        self.live_code_show = QPushButton('展示')
         layout.addWidget(label_live_rtmp, 0, 0)
         layout.addWidget(self.live_rtmp, 0, 1)
-        layout.addWidget(self.live_rtmp_copy, 0, 2)
+        layout.addWidget(self.live_rtmp_copy, 0, 2, 1, 2)
         layout.addWidget(label_live_code, 1, 0)
         layout.addWidget(self.live_code, 1, 1)
         layout.addWidget(self.live_code_copy, 1, 2)
+        layout.addWidget(self.live_code_show, 1, 3)
         button_layout = QGridLayout()
         button_layout.setContentsMargins(0, 0, 0, 0)
         self.refresh_live_code = QPushButton('刷新直播码')
         self.toggle_live_button = QPushButton('开启直播')
         self.update_obs_config = QPushButton('更新 OBS 配置')
-        self.start_obs_studio = QPushButton('启动 OBS 配置')
+        self.start_obs_studio = QPushButton('启动 OBS')
+        test_danmu = QPushButton('测试弹幕')
         self.toggle_live_button.setCheckable(True)
         button_layout.addWidget(self.refresh_live_code, 0, 0)
         button_layout.addWidget(self.toggle_live_button, 0, 1)
         button_layout.addWidget(self.update_obs_config, 0, 2)
         button_layout.addWidget(self.start_obs_studio, 0, 3)
+        button_layout.addWidget(test_danmu, 0, 4)
         button_frame = QFrame()
         button_frame.setLayout(button_layout)
         layout.addWidget(button_frame, 2, 0, 3, 0)
@@ -52,6 +59,21 @@ class LiveControlCenter(QFrame):
         self.toggle_live_button.clicked.connect(self.toggle_live)
         self.update_obs_config.clicked.connect(self.update_obs)
         self.start_obs_studio.clicked.connect(self.start_obs_profile)
+        self.live_code_show.clicked.connect(self.toggle_code_show)
+        test_danmu.clicked.connect(self.launch_danmu)
+
+    def launch_danmu(self):
+        danmu_w = DanmuWidget(roomid=466)
+        danmu_w.show_data()
+        danmu_w.show()
+
+    def toggle_code_show(self, _):
+        if self.live_code.echoMode() == QLineEdit.Password:
+            self.live_code_show.setText('隐藏')
+            self.live_code.setEchoMode(QLineEdit.Normal)
+        else:
+            self.live_code_show.setText('展示')
+            self.live_code.setEchoMode(QLineEdit.Password)
 
     @asyncSlot()
     async def start_obs_profile(self):

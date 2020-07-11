@@ -43,7 +43,7 @@ def create_obs_configuration(rtmp, key, profile='BilibiliLive'):
         target.mkdir(parents=True)
     basic = f'[General]\nName={profile}\n'
     if not (target / 'basic.ini').exists():
-        with open((target / 'basic.ini').as_posix(), 'w') as f:
+        with (target / 'basic.ini').open('w') as f:
             f.write(basic)
             f.flush()
     service = OBSServiceData(type='rtmp_custom', settings={
@@ -52,6 +52,21 @@ def create_obs_configuration(rtmp, key, profile='BilibiliLive'):
         'server': rtmp,
         'key': key,
     })
-    with open((target / 'service.json').as_posix(), 'w') as f:
+    with (target / 'service.json').open('w') as f:
         f.write(service.json(indent=4))
         f.flush()
+
+
+class Timer:
+    def __init__(self, timeout, callback):
+        self._timeout = timeout
+        self._callback = callback
+        self._task = asyncio.ensure_future(self._job())
+
+    async def _job(self):
+        await asyncio.sleep(self._timeout)
+        await self._callback()
+        await self._job()
+
+    def cancel(self):
+        self._task.cancel()
