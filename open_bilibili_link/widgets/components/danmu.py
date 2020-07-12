@@ -16,7 +16,7 @@ class DanmuItemDelegate(QStyledItemDelegate):
         model = index.model()
         text = str(model.data(index, Qt.DisplayRole))
         rect = fm.boundingRect(option.rect, Qt.TextWordWrap, text)
-        return QSize(option.rect.width(), rect.height())
+        return QSize(option.rect.width(), rect.height() + 6)
 
 
 class DanmuWidget(QDockWidget):
@@ -33,16 +33,20 @@ class DanmuWidget(QDockWidget):
             self.setStyleSheet(f.read())
         self.setFixedSize(400, 700)
         area = QScrollArea()
+        area.setContentsMargins(0, 0, 0, 0)
         area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.danmu_list_view = QListView()
+        self.danmu_list_view.setContentsMargins(0, 0, 0, 0)
         self.danmu_list_view.setWordWrap(True)
         self.danmu_list_view.setItemDelegate(DanmuItemDelegate(self))
         self.danmu_list_view.setStyleSheet('QListView { background: skyblue; font-size: 13px; }')
         self.danmu_list_model = QStandardItemModel()
         self.danmu_list_view.setModel(self.danmu_list_model)
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.danmu_list_view)
         area.setLayout(layout)
+        self.setContentsMargins(0, 0, 0, 0)
         self.setWidget(area)
 
     def show_data(self):

@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QPushButton
 from asyncqt import asyncSlot
 
-from open_bilibili_link.services import BilibiliLiveService
+from open_bilibili_link.services import BilibiliLiveService, BilibiliServiceException
 from open_bilibili_link.utils import create_obs_configuration, check_exists, run_command
 from open_bilibili_link.widgets.components.button import CopyButton
 from open_bilibili_link.widgets.components.danmu import DanmuWidget
@@ -44,13 +44,15 @@ class LiveControlCenter(QFrame):
         self.toggle_live_button = QPushButton('开启直播')
         self.update_obs_config = QPushButton('更新 OBS 配置')
         self.start_obs_studio = QPushButton('启动 OBS')
+        self.sign_in_btn = QPushButton('签到')
         test_danmu = QPushButton('测试弹幕')
         self.toggle_live_button.setCheckable(True)
         button_layout.addWidget(self.refresh_live_code, 0, 0)
         button_layout.addWidget(self.toggle_live_button, 0, 1)
         button_layout.addWidget(self.update_obs_config, 0, 2)
         button_layout.addWidget(self.start_obs_studio, 0, 3)
-        button_layout.addWidget(test_danmu, 0, 4)
+        button_layout.addWidget(self.sign_in_btn, 0, 4)
+        button_layout.addWidget(test_danmu, 1, 0)
         button_frame = QFrame()
         button_frame.setLayout(button_layout)
         layout.addWidget(button_frame, 2, 0, 3, 0)
@@ -60,6 +62,7 @@ class LiveControlCenter(QFrame):
         self.update_obs_config.clicked.connect(self.update_obs)
         self.start_obs_studio.clicked.connect(self.start_obs_profile)
         self.live_code_show.clicked.connect(self.toggle_code_show)
+        self.sign_in_btn.clicked.connect(self.sign_in)
         test_danmu.clicked.connect(self.launch_danmu)
 
     def launch_danmu(self):
@@ -74,6 +77,14 @@ class LiveControlCenter(QFrame):
         else:
             self.live_code_show.setText('展示')
             self.live_code.setEchoMode(QLineEdit.Password)
+
+    @asyncSlot()
+    async def sign_in(self):
+        try:
+            data = await BilibiliLiveService().checkin()
+            Toast.toast(self, data.text)
+        except BilibiliServiceException as err:
+            Toast.toast(self, f'[{err.args[1]}] {err.args[0]}')
 
     @asyncSlot()
     async def start_obs_profile(self):
