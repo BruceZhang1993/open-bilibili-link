@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+from typing import Optional
 
 from PyQt5.QtCore import Qt, QSize, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QFontMetrics
@@ -8,6 +9,54 @@ from asyncqt import asyncClose
 
 from open_bilibili_link.models import DanmuData
 from open_bilibili_link.services import BilibiliLiveDanmuService
+
+
+class DanmuParser:
+    @staticmethod
+    def parse(danmu: DanmuData) -> Optional[str]:
+        print('danmu received', danmu.msg_type)
+        if danmu.msg_type == BilibiliLiveDanmuService.TYPE_DANMUKU:
+            return f'{danmu.name}: {danmu.content}'
+        elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_GIFT:
+            return f'{danmu.content.data.uname} {danmu.content.data.action} {danmu.content.data.gift_name} ' \
+                   f'x{danmu.content.data.num}'
+        elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_ENTER:
+            vip_text = ''
+            if danmu.content.data.vip:
+                vip_text += '[VIP] '
+            if danmu.content.data.svip:
+                vip_text += '[SVIP] '
+            return f'{vip_text}{danmu.content.data.uname} 进入房间'
+        elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_BROADCAST:
+            print(danmu.content)
+        elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_OTHER:
+            if isinstance(danmu.content, str) or isinstance(danmu.content, bytes):
+                print(danmu.content)
+            else:
+                print(danmu.content.cmd)
+        return None
+
+
+class DanmuPusher:
+    CACHE_DIR = Path.home() / '.cache/OBL'
+
+    def __init__(self, roomid):
+        self.roomid = roomid
+        if not self.CACHE_DIR.exists():
+            self.CACHE_DIR.mkdir(parents=True)
+        self.target = self.CACHE_DIR / f'{roomid}.txt'
+        self.target.unlink(missing_ok=True)
+        self.file = self.target.open('a')
+
+    def append_danmu(self, danmu: DanmuData):
+        text = DanmuParser.parse(danmu)
+        if text is not None:
+            self.file.write(text + '\n')
+            self.file.flush()
+
+    def close(self):
+        self.file.flush()
+        self.file.close()
 
 
 class DanmuItemDelegate(QStyledItemDelegate):
@@ -54,34 +103,14 @@ class DanmuWidget(QDockWidget):
             asyncio.gather(self.load_danmu())
 
     def append_danmu(self, danmu: DanmuData):
-        print('danmu received', danmu.msg_type)
-        if danmu.msg_type == BilibiliLiveDanmuService.TYPE_DANMUKU:
-            self.danmu_list_model.appendRow([QStandardItem(f'{danmu.name}: {danmu.content}')])
-        elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_GIFT:
-            self.danmu_list_model.appendRow([QStandardItem(
-                f'{danmu.content.data.uname} {danmu.content.data.action} '
-                f'{danmu.content.data.gift_name} x{danmu.content.data.num}'
-            )])
-        elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_ENTER:
-            vip_text = ''
-            if danmu.content.data.vip:
-                vip_text += '[VIP] '
-            if danmu.content.data.svip:
-                vip_text += '[SVIP] '
-            self.danmu_list_model.appendRow([QStandardItem(
-                f'{vip_text}{danmu.content.data.uname} 进入房间'
-            )])
-        elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_BROADCAST:
-            print(danmu.content)
-        elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_OTHER:
-            if isinstance(danmu.content, str) or isinstance(danmu.content, bytes):
-                print(danmu.content)
-            else:
-                print(danmu.content.cmd)
-        self.danmu_list_view.scrollToBottom()
+        text = DanmuParser.parse(danmu)
+        if text is not None:
+            self.danmu_list_model.appendRow([QStandardItem(text)])
+            self.danmu_list_view.scrollToBottom()
 
     @asyncClose
     async def closeEvent(self, _):
+        BilibiliLiveDanmuService(self.danmu_pusher.append_danmu).callback = self.append_danmu
         await BilibiliLiveDanmuService(self.append_danmu).session.close()
 
     async def load_danmu(self):

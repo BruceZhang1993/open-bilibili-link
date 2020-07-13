@@ -1,13 +1,13 @@
 import asyncio
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QPushButton
+from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QPushButton, QApplication
 from asyncqt import asyncSlot
 
-from open_bilibili_link.services import BilibiliLiveService, BilibiliServiceException
+from open_bilibili_link.services import BilibiliLiveService, BilibiliServiceException, BilibiliLiveDanmuService
 from open_bilibili_link.utils import create_obs_configuration, check_exists, run_command
 from open_bilibili_link.widgets.components.button import CopyButton
-from open_bilibili_link.widgets.components.danmu import DanmuWidget
+from open_bilibili_link.widgets.components.danmu import DanmuWidget, DanmuPusher
 from open_bilibili_link.widgets.components.toast import Toast
 
 
@@ -18,6 +18,7 @@ class LiveControlCenter(QFrame):
             self.homepage = kwargs.pop('homepage')
         super().__init__(*args, **kwargs)
         self.setup_ui()
+        self.danmu_pusher = None
 
     def setup_ui(self):
         layout = QGridLayout()
@@ -45,14 +46,17 @@ class LiveControlCenter(QFrame):
         self.update_obs_config = QPushButton('更新 OBS 配置')
         self.start_obs_studio = QPushButton('启动 OBS')
         self.sign_in_btn = QPushButton('签到')
-        test_danmu = QPushButton('测试弹幕')
+        test_danmu = QPushButton('测试弹幕1')
+        test_danmu_txt = QPushButton('测试弹幕2')
         self.toggle_live_button.setCheckable(True)
+        test_danmu_txt.setCheckable(True)
         button_layout.addWidget(self.refresh_live_code, 0, 0)
         button_layout.addWidget(self.toggle_live_button, 0, 1)
         button_layout.addWidget(self.update_obs_config, 0, 2)
         button_layout.addWidget(self.start_obs_studio, 0, 3)
         button_layout.addWidget(self.sign_in_btn, 0, 4)
         button_layout.addWidget(test_danmu, 1, 0)
+        button_layout.addWidget(test_danmu_txt, 1, 1)
         button_frame = QFrame()
         button_frame.setLayout(button_layout)
         layout.addWidget(button_frame, 2, 0, 3, 0)
@@ -64,9 +68,24 @@ class LiveControlCenter(QFrame):
         self.live_code_show.clicked.connect(self.toggle_code_show)
         self.sign_in_btn.clicked.connect(self.sign_in)
         test_danmu.clicked.connect(self.launch_danmu)
+        test_danmu_txt.clicked.connect(self.launch_danmu_txt)
+
+    @asyncSlot()
+    async def launch_danmu_txt(self):
+        if self.danmu_pusher is None:
+            self.danmu_pusher = DanmuPusher(21686237)
+            clipboard = QApplication.clipboard()
+            clipboard.setText(self.danmu_pusher.target.as_posix())
+            Toast.toast(self, '已复制文件路径，可作为 OBS 文本源')
+            BilibiliLiveDanmuService(self.danmu_pusher.append_danmu).callback = self.danmu_pusher.append_danmu
+            await BilibiliLiveDanmuService(self.danmu_pusher.append_danmu).ws_connect(21686237)
+        else:
+            await BilibiliLiveDanmuService(self.danmu_pusher.append_danmu).session.close()
+            self.danmu_pusher.close()
+            self.danmu_pusher = None
 
     def launch_danmu(self):
-        danmu_w = DanmuWidget(roomid=466)
+        danmu_w = DanmuWidget(roomid=21686237)
         danmu_w.show_data()
         danmu_w.show()
 

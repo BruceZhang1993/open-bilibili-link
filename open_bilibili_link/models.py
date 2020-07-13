@@ -227,7 +227,7 @@ class RoomInitData(BaseModel):
     lock_till: int
     encrypted: bool
     pwd_verified: bool
-    live_time: datetime.datetime
+    live_time: int
     room_shield: int
     is_sp: bool
     special_type: int
