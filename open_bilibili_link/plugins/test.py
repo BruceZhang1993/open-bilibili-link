@@ -1,10 +1,13 @@
+from open_bilibili_link.services import BilibiliLiveDanmuService
+
+
 def test_danmu_plugin(danmu):
     print('test plugin', danmu)
 
 
 def register():
-    pass
+    BilibiliLiveDanmuService().register_callback(test_danmu_plugin)
 
 
 def unregister():
-    pass
+    BilibiliLiveDanmuService().unregister_callback(test_danmu_plugin)

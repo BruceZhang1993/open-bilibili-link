@@ -70,23 +70,21 @@ class LiveControlCenter(QFrame):
         test_danmu.clicked.connect(self.launch_danmu)
         test_danmu_txt.clicked.connect(self.launch_danmu_txt)
 
-    @asyncSlot()
-    async def launch_danmu_txt(self):
+    def launch_danmu_txt(self):
         if self.danmu_pusher is None:
-            self.danmu_pusher = DanmuPusher(21686237)
+            self.danmu_pusher = DanmuPusher(466)
             clipboard = QApplication.clipboard()
             clipboard.setText(self.danmu_pusher.target.as_posix())
             Toast.toast(self, '已复制文件路径，可作为 OBS 文本源')
             BilibiliLiveDanmuService().register_callback(self.danmu_pusher.append_danmu)
-            await BilibiliLiveDanmuService().ws_connect(21686237)
+            asyncio.gather(BilibiliLiveDanmuService().ws_connect(466))
         else:
             BilibiliLiveDanmuService().unregister_callback(self.danmu_pusher.append_danmu)
-            await BilibiliLiveDanmuService().session.close()
             self.danmu_pusher.close()
             self.danmu_pusher = None
 
     def launch_danmu(self):
-        danmu_w = DanmuWidget(roomid=21686237)
+        danmu_w = DanmuWidget(roomid=466)
         danmu_w.show_data()
         danmu_w.show()
 

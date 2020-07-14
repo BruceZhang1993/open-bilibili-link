@@ -100,7 +100,7 @@ class DanmuWidget(QDockWidget):
 
     def show_data(self):
         if self.roomid is not None:
-            asyncio.gather(self.load_danmu())
+            self.load_danmu()
 
     def append_danmu(self, danmu: DanmuData):
         text = DanmuParser.parse(danmu)
@@ -111,8 +111,7 @@ class DanmuWidget(QDockWidget):
     @asyncClose
     async def closeEvent(self, _):
         BilibiliLiveDanmuService().unregister_callback(self.append_danmu)
-        await BilibiliLiveDanmuService().session.close()
 
-    async def load_danmu(self):
+    def load_danmu(self):
         BilibiliLiveDanmuService().register_callback(self.append_danmu)
-        await BilibiliLiveDanmuService().ws_connect(self.roomid)
+        asyncio.gather(BilibiliLiveDanmuService().ws_connect(self.roomid))
