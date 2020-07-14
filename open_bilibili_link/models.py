@@ -166,6 +166,21 @@ class LiveCheckinData(BaseModel):
     text: str
 
 
+class LiveCheckInfoData(BaseModel):
+    text: str
+    special_text: str = Field(alias='specialText')
+    status: bool
+    all_days: int = Field(alias='allDays')
+    current_month: int = Field(alias='curMonth')
+    current_year: int = Field(alias='curYear')
+    current_day: int = Field(alias='curDay')
+    current_date: str = Field(alias='curDate')
+    had_sign_days: int = Field(alias='hadSignDays')
+    new_task: int = Field(alias='newTask')
+    sign_days_list: List[int] = Field(alias='signDaysList')
+    sign_bonus_days_list: List[int] = Field(alias='signBonusDaysList')
+
+
 class RoomInfoData(BaseModel):
     uid: int
     room_id: int
@@ -276,6 +291,11 @@ class LiveAreaResponse(BaseResponseV2):
         list: List[LiveArea]
     msg: str
     data: List[LiveAreaCategory]
+
+
+class LiveCheckInfoResponse(BaseResponseV2):
+    ttl: int
+    data: Optional[LiveCheckInfoData]
 
 
 class LiveCheckinResponse(BaseResponseV2):

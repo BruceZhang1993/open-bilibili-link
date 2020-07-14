@@ -11,7 +11,7 @@ from typing import List, Callable, Optional
 from urllib.parse import quote_plus
 
 import rsa
-from aiohttp import ClientSession, CookieJar, TraceConfig, TraceRequestStartParams, WSMsgType
+from aiohttp import ClientSession, CookieJar, TraceConfig, TraceRequestStartParams, WSMsgType, WSMessage
 
 from open_bilibili_link import models
 from open_bilibili_link.models import UserInfoData, RoomInfoData, DanmuKeyResponse, DanmuKeyData, RoomInitResponse, \
@@ -162,6 +162,13 @@ class BilibiliBaseService:
             res.data.save_to_file(self.TOKEN_FILE)
             self.token_data = res.data
             return res.data
+
+    @login_required
+    async def stat(self):
+        uri = f'https://{self.MAIN_API_HOST}/x/web-interface/nav/stat'
+        async with self.session.get(uri, headers=self.DEFAULT_HEADERS,
+                                    params={'access_key': self.token_data.token_info.access_token}) as r:
+            return await r.json()
 
     @login_required
     def get_user_id(self) -> int:
@@ -326,6 +333,15 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             return res.data
 
     @login_required
+    async def check_info(self):
+        uri = f'https://{self.host}/xlive/web-ucenter/v1/sign/WebGetSignInfo'
+        async with self.session.get(uri, params={'access_key': self.token_data.token_info.access_token}) as r:
+            res = models.LiveCheckInfoResponse(**(await r.json()))
+            if res.code != 0:
+                raise BilibiliServiceException(res.message, res.code)
+            return res.data
+
+    @login_required
     async def checkin(self) -> models.LiveCheckinData:
         """
         签到
@@ -479,11 +495,19 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
     TYPE_GIFT = 'gift'
     TYPE_OTHER = 'other'
 
-    def __init__(self, callback):
+    def __init__(self):
         super().__init__()
         self.ws = None
-        self.callback = callback
+        self.callbacks = set()
         self.session = ClientSession()
+
+    def register_callback(self, callback):
+        self.callbacks.add(callback)
+
+    def unregister_callback(self, callback):
+        self.callbacks.remove(callback)
+        if len(self.callbacks) == 0:
+            asyncio.gather(self.session.close())
 
     async def get_danmu_key(self, roomid) -> DanmuKeyData:
         params = {'id': roomid, 'type': 0}
@@ -577,6 +601,8 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
         await self.ws.send_bytes(self.encode_payload('[object Object]'))
 
     async def ws_connect(self, roomid):
+        if self.ws and not self.ws.closed:
+            return
         room_init_uri = f'https://{self.LIVE_API_HOST}/room/v1/Room/room_init'
         room_init_params = {'id': roomid}
         async with self.session.get(room_init_uri, params=room_init_params) as r:
@@ -593,9 +619,24 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
             await ws.send_bytes(self.encode_payload(payload, type_=self.TYPE_JOIN_ROOM))
             timer = Timer(30, self.send_heatbeat)
             async for msg in ws:
+                msg: WSMessage
                 if msg.type == WSMsgType.BINARY:
                     for data in self.decode_msg(msg.data):
                         danmu = DanmuData(**data)
-                        self.callback(danmu)
+                        for cb in self.callbacks:
+                            try:
+                                cb(danmu)
+                            except Exception as err:
+                                print('DanmuPushError: ' + str(err))
                 else:
                     print(msg)
+
+
+async def main():
+    print(await BilibiliLiveService().stat())
+    await BilibiliLiveService().session.close()
+
+
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())

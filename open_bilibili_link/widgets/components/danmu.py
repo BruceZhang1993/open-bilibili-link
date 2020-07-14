@@ -110,8 +110,9 @@ class DanmuWidget(QDockWidget):
 
     @asyncClose
     async def closeEvent(self, _):
-        BilibiliLiveDanmuService(self.danmu_pusher.append_danmu).callback = self.append_danmu
-        await BilibiliLiveDanmuService(self.append_danmu).session.close()
+        BilibiliLiveDanmuService().unregister_callback(self.append_danmu)
+        await BilibiliLiveDanmuService().session.close()
 
     async def load_danmu(self):
-        await BilibiliLiveDanmuService(self.append_danmu).ws_connect(self.roomid)
+        BilibiliLiveDanmuService().register_callback(self.append_danmu)
+        await BilibiliLiveDanmuService().ws_connect(self.roomid)
