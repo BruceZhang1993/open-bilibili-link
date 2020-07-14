@@ -1,13 +1,28 @@
-#### Open Bilibili Link
+### Open Bilibili Link
 Working in progress
 
-##### Development
+#### Development
 ```shell script
 pipenv install
 python3 -m open_bilibili_link
 ```
 
-##### Structure
+#### Features
+- [x] 帐号密码登录
+- [ ] 验证码处理
+- [x] 直播签到
+- [x] 用户基础信息
+- [x] 直播间信息
+- [x] 获取直播码
+- [x] 开始和关闭直播
+- [x] 生成 OBS 配置
+- [x] 启动 OBS
+- [x] 简单弹幕视图
+- [x] 同步弹幕到文件 (OBS 可加载为弹幕视图)
+
+More...
+
+#### Structure
 ```text
 ├── LICENSE # LGPL3
 ├── open_bilibili_link # Package root
@@ -48,12 +63,12 @@ python3 -m open_bilibili_link
 └── README.md # Readme file
 ```
 
-##### Powered by
+#### Powered by
 - Qt5 & PyQt5 & asyncqt: _GUI & GUI asynchronous event loop_
 - asyncio & aiohttp: _Asynchronous IO & network_
 - rsa: _RSA encryption_
 - pydantic: _JSON model & validation_
 - pipenv(dev): _Virtualenv manager_
 
-##### License
+#### License
 This project is licensed under [LGPL3](https://github.com/BruceZhang1993/open-bilibili-link/blob/master/LICENSE).
