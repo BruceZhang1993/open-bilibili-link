@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QFrame, QVBoxLayout, QPushButton
 
 
-class TestPage(QFrame):
+class SettingPage(QFrame):
     btn1: QPushButton
 
     def __init__(self, context=None):

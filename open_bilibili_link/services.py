@@ -17,7 +17,7 @@ from aiohttp import ClientSession, CookieJar, TraceConfig, TraceRequestStartPara
 from open_bilibili_link import models
 from open_bilibili_link.models import UserInfoData, RoomInfoData, DanmuKeyResponse, DanmuKeyData, RoomInitResponse, \
     DanmuData
-from open_bilibili_link.utils import ping, Timer, color_hex_to_int
+from open_bilibili_link.utils import ping, Timer, color_hex_to_int, Singleton
 
 
 def login_required(func):
@@ -34,18 +34,6 @@ def login_required(func):
         return func(*args, **kwargs)
 
     return wrapper
-
-
-class Singleton(type):
-    """
-    单例类
-    """
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
 
 
 class BilibiliServiceException(Exception):

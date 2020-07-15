@@ -8,6 +8,7 @@ from asyncqt import asyncClose
 from open_bilibili_link.services import BilibiliLiveService
 from open_bilibili_link.widgets.menu import MenuView, MenuFrame
 from open_bilibili_link.widgets.routes import RouteManager
+from open_bilibili_link.plugin import PluginManager
 
 
 class AppMainWindow(QMainWindow):
@@ -23,6 +24,7 @@ class AppMainWindow(QMainWindow):
         self.menu_model: QStandardItemModel
         self.pages = {}
         self.setup_ui()
+        PluginManager().register_plugins()
 
     @asyncClose
     async def closeEvent(self, event):
@@ -47,8 +49,11 @@ class AppMainWindow(QMainWindow):
         # self.menu_model = QStringListModel()
         self.down_menu = MenuView(self, role='down', target=self)
         self.menu_model = QStandardItemModel()
-        self.menu_strings = ['home', 'test']
-        self.menu_icons = [QIcon.fromTheme('home'), QIcon.fromTheme('configurator')]
+        self.menu_strings = ['home', 'plugin', 'setting']
+        icon_base = Path(__file__).parent / 'images'
+        self.menu_icons = [QIcon((icon_base / 'home.svg').as_posix()),
+                           QIcon((icon_base / 'plugin.svg').as_posix()),
+                           QIcon((icon_base / 'setting.svg').as_posix())]
         self.menu_model.appendColumn(list(map(lambda s: QStandardItem(s, ''), self.menu_icons)))
         self.down_menu_strings = ['exit']
         self.down_menu_icons = [QIcon.fromTheme('exit')]
