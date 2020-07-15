@@ -56,7 +56,6 @@ class UserCardMain(QFrame):
         self.parent().show_data()
 
     def set_user_info(self, userinfo):
-        print(userinfo)
         if userinfo.sex == '男':
             sex_icon = '♂️'
         elif userinfo.sex == '女':
@@ -156,13 +155,12 @@ class UserCardLive(QFrame):
         else:
             self.label_title_edit.setText('...')
             self.label_title_edit.setEnabled(False)
-            print(await BilibiliLiveService().update_live_heading(title=self.label_title_content.text()))
+            await BilibiliLiveService().update_live_heading(title=self.label_title_content.text())
             self.label_title_edit.setText('修改')
             self.label_title_content.setReadOnly(True)
             self.label_title_edit.setEnabled(True)
 
     async def set_room_info(self, room_info):
-        pprint(room_info)
         # self.top_label.setText('直播中' if room_info.live_status else '未开播')
         self.label_roomid.setText(
             f'房间号: {room_info.room_id} <a href="https://live.bilibili.com/{room_info.room_id}">Go</a>')

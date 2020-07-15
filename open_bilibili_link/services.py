@@ -620,7 +620,7 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
         return data
 
     async def send_heatbeat(self):
-        print('send heartbeat')
+        print('[WS] Sending heartbeat package')
         await self.ws.send_bytes(self.encode_payload('[object Object]'))
 
     async def ws_connect(self, roomid):
@@ -629,7 +629,6 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
         room_init_uri = f'https://{self.LIVE_API_HOST}/room/v1/Room/room_init'
         room_init_params = {'id': roomid}
         async with self.session.get(room_init_uri, params=room_init_params) as r:
-            print(await r.text())
             res = RoomInitResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -653,13 +652,3 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
                                 print('DanmuPushError: ' + str(err))
                 else:
                     print(msg)
-
-
-async def main():
-    print(await BilibiliLiveService().stat())
-    await BilibiliLiveService().session.close()
-
-
-if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())

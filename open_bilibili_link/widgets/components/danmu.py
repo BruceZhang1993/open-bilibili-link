@@ -16,7 +16,7 @@ from open_bilibili_link.widgets.components.toast import Toast
 class DanmuParser:
     @staticmethod
     def parse(danmu: DanmuData) -> Optional[str]:
-        print('danmu received', danmu.msg_type)
+        print('[WS] Received', danmu.msg_type)
         if danmu.msg_type == BilibiliLiveDanmuService.TYPE_DANMUKU:
             return f'{danmu.name}: {danmu.content}'
         elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_GIFT:
@@ -30,12 +30,12 @@ class DanmuParser:
                 vip_text += '[SVIP] '
             return f'{vip_text}{danmu.content.data.uname} 进入房间'
         elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_BROADCAST:
-            print(danmu.content)
+            print('[WS] Received broadcast', danmu.content)
         elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_OTHER:
             if isinstance(danmu.content, str) or isinstance(danmu.content, bytes):
-                print(danmu.content)
+                print('[WS] Received data', danmu.content)
             else:
-                print(danmu.content.cmd)
+                print('[WS] Received cmd', danmu.content.cmd)
         return None
 
 
