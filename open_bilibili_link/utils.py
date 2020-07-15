@@ -4,6 +4,10 @@ from pathlib import Path
 from open_bilibili_link.models import OBSServiceData
 
 
+def color_hex_to_int(hexs: str) -> int:
+    return int(hexs.lstrip('#'), 16)
+
+
 async def check_exists(command):
     process = await asyncio.create_subprocess_exec(
         'which', command,

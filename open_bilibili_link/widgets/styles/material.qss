@@ -270,6 +270,10 @@ QPushButton:pressed {
 	color: #FFFFFF;
 }
 
+QPushButton:checked {
+	background: #863fc8;
+}
+
 QLineEdit {
 	background: transparent;
 	border: 1px solid transparent;

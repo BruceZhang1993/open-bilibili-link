@@ -7,6 +7,7 @@ from pathlib import Path
 from pprint import pprint
 from random import random
 from struct import unpack
+from time import time
 from typing import List, Callable, Optional
 from urllib.parse import quote_plus
 
@@ -16,7 +17,7 @@ from aiohttp import ClientSession, CookieJar, TraceConfig, TraceRequestStartPara
 from open_bilibili_link import models
 from open_bilibili_link.models import UserInfoData, RoomInfoData, DanmuKeyResponse, DanmuKeyData, RoomInitResponse, \
     DanmuData
-from open_bilibili_link.utils import ping, Timer
+from open_bilibili_link.utils import ping, Timer, color_hex_to_int
 
 
 def login_required(func):
@@ -475,6 +476,28 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             res = models.BaseResponseV2(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
+
+    @login_required
+    async def send_danmu(self, roomid, content, color='#ffffff', fontsize=25, mode=1, bubble=0):
+        uri = f'https://{self.host}/msg/send'
+        csrf = self.get_csrf()
+        data = {
+            'color': color_hex_to_int(color),
+            'fontsize': fontsize,
+            'mode': mode,
+            'msg': content,
+            'rnd': int(time()),
+            'roomid': roomid,
+            'bubble': bubble,
+            'csrf_token': csrf,
+            'csrf': csrf,
+        }
+        async with self.session.post(uri, data=data,
+                                     params={'access_key': self.token_data.token_info.access_token}) as r:
+            res = models.BaseResponseV2(**(await r.json()))
+            if res.code != 0:
+                raise BilibiliServiceException(res.message, res.code)
+            return res.data
 
 
 class BilibiliLiveDanmuService(metaclass=Singleton):

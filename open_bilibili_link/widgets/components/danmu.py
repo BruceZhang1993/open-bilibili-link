@@ -4,11 +4,13 @@ from typing import Optional
 
 from PyQt5.QtCore import Qt, QSize, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QFontMetrics
-from PyQt5.QtWidgets import QDockWidget, QVBoxLayout, QListView, QScrollArea, QStyledItemDelegate, QStyleOptionViewItem
-from asyncqt import asyncClose
+from PyQt5.QtWidgets import QDockWidget, QVBoxLayout, QListView, QScrollArea, QStyledItemDelegate, QStyleOptionViewItem, \
+    QFrame, QLineEdit
+from asyncqt import asyncClose, asyncSlot
 
 from open_bilibili_link.models import DanmuData
-from open_bilibili_link.services import BilibiliLiveDanmuService
+from open_bilibili_link.services import BilibiliLiveDanmuService, BilibiliLiveService
+from open_bilibili_link.widgets.components.toast import Toast
 
 
 class DanmuParser:
@@ -81,6 +83,13 @@ class DanmuWidget(QDockWidget):
         with open(Path(__file__).parent.parent / 'styles' / 'material.qss', 'r') as f:
             self.setStyleSheet(f.read())
         self.setFixedSize(400, 700)
+        main = QFrame()
+        main.setContentsMargins(0, 0, 0, 0)
+        self.danmu_send = QLineEdit()
+        self.danmu_send.setPlaceholderText('发送弹幕')
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main.setLayout(main_layout)
         area = QScrollArea()
         area.setContentsMargins(0, 0, 0, 0)
         area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -96,7 +105,20 @@ class DanmuWidget(QDockWidget):
         layout.addWidget(self.danmu_list_view)
         area.setLayout(layout)
         self.setContentsMargins(0, 0, 0, 0)
-        self.setWidget(area)
+        main_layout.addWidget(area)
+        main_layout.addWidget(self.danmu_send)
+        self.setWidget(main)
+        self.danmu_send.returnPressed.connect(self.send_danmu_text)
+
+    @asyncSlot()
+    async def send_danmu_text(self):
+        if self.danmu_send.text().strip() == '':
+            return
+        if not BilibiliLiveService().logged_in:
+            Toast.toast(self, '用户未登录')
+            return
+        await BilibiliLiveService().send_danmu(self.roomid, self.danmu_send.text().strip())
+        self.danmu_send.setText('')
 
     def show_data(self):
         if self.roomid is not None:
