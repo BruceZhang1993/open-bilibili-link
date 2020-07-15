@@ -5,7 +5,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QFrame, QHBoxLayout, QListView, QSizePolicy, QApplication
 from asyncqt import asyncClose
 
-from open_bilibili_link.services import BilibiliLiveService
+from open_bilibili_link.services import BilibiliLiveService, BilibiliLiveDanmuService
 from open_bilibili_link.widgets.menu import MenuView, MenuFrame
 from open_bilibili_link.widgets.routes import RouteManager
 from open_bilibili_link.plugin import PluginManager
@@ -28,7 +28,10 @@ class AppMainWindow(QMainWindow):
 
     @asyncClose
     async def closeEvent(self, event):
-        await BilibiliLiveService().session.close()
+        if BilibiliLiveDanmuService().session and not BilibiliLiveDanmuService().session.closed:
+            await BilibiliLiveDanmuService().session.close()
+        if BilibiliLiveService().session and not BilibiliLiveService().session.closed:
+            await BilibiliLiveService().session.close()
 
     def setup_ui(self):
         # load qss

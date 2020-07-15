@@ -518,7 +518,7 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
     def unregister_callback(self, callback):
         self.callbacks.remove(callback)
         if len(self.callbacks) == 0:
-            asyncio.gather(self.session.close())
+            asyncio.gather(self.ws.close())
 
     async def get_danmu_key(self, roomid) -> DanmuKeyData:
         params = {'id': roomid, 'type': 0}
