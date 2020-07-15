@@ -1,3 +1,5 @@
+import asyncio
+
 from PyQt5.QtCore import QTimerEvent, Qt
 from PyQt5.QtGui import QShowEvent
 from PyQt5.QtWidgets import QMessageBox, QWidget, QApplication
@@ -32,4 +34,4 @@ class Toast(QMessageBox):
         toast = cls(parent)
         toast.setText(text)
         toast.delay = 3
-        toast.exec()
+        toast.show()
