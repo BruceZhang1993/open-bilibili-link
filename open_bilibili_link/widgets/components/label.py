@@ -1,13 +1,13 @@
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QPainter, QFont, QBrush, QColor
+from PyQt5.QtGui import QPainter, QFont, QBrush, QColor, QMouseEvent
 from PyQt5.QtWidgets import QLabel
 
 
 class QClickableLabel(QLabel):
-    clicked = pyqtSignal()
+    clicked = pyqtSignal(QMouseEvent, QLabel)
 
-    def mouseReleaseEvent(self, _):
-        self.clicked.emit()
+    def mouseReleaseEvent(self, event):
+        self.clicked.emit(event, self)
 
 
 class KeyframeLabel(QLabel):

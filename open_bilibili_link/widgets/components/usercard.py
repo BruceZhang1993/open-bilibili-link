@@ -143,7 +143,7 @@ class UserCardLive(QFrame):
         self.label_area_edit.clicked.connect(self.label_area_edit_clicked)
 
     def label_area_edit_clicked(self):
-        selector = AreaSelector()
+        selector = AreaSelector(self)
         selector.show_data()
         selector.exec()
 

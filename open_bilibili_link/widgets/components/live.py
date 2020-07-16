@@ -50,6 +50,7 @@ class LiveControlCenter(QFrame):
         self.sign_in_btn.setCheckable(True)
         test_danmu = QPushButton('弹幕视图')
         test_danmu_txt = QPushButton('开启弹幕输出')
+        plugin_page_btn = QPushButton('我的插件')
         self.toggle_live_button.setCheckable(True)
         test_danmu_txt.setCheckable(True)
         button_layout.addWidget(self.refresh_live_code, 0, 0)
@@ -59,6 +60,7 @@ class LiveControlCenter(QFrame):
         button_layout.addWidget(self.sign_in_btn, 0, 4)
         button_layout.addWidget(test_danmu, 1, 0)
         button_layout.addWidget(test_danmu_txt, 1, 1)
+        button_layout.addWidget(plugin_page_btn, 1, 2)
         button_frame = QFrame()
         button_frame.setLayout(button_layout)
         layout.addWidget(button_frame, 2, 0, 3, 0)
@@ -71,6 +73,10 @@ class LiveControlCenter(QFrame):
         self.sign_in_btn.clicked.connect(self.sign_in)
         test_danmu.clicked.connect(self.launch_danmu)
         test_danmu_txt.clicked.connect(self.launch_danmu_txt)
+        plugin_page_btn.clicked.connect(self.go_plugin_page)
+
+    def go_plugin_page(self, _):
+        self.homepage.context.goto('obl://plugin')
 
     def launch_danmu_txt(self):
         if self.danmu_pusher is None:
@@ -78,7 +84,7 @@ class LiveControlCenter(QFrame):
             clipboard = QApplication.clipboard()
             clipboard.setText(self.danmu_pusher.target.as_posix())
             Toast.toast(self, '已复制文件路径，可作为 OBS 文本源')
-            BilibiliLiveDanmuService().register_callback(self.danmu_pusher.append_danmu)
+            BilibiliLiveDanmuService().register_callback(self.danmu_pusher.append_danmu, external=False)
             asyncio.gather(BilibiliLiveDanmuService().ws_connect(self.roomid))
         else:
             BilibiliLiveDanmuService().unregister_callback(self.danmu_pusher.append_danmu)

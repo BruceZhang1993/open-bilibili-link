@@ -3,8 +3,10 @@ from pathlib import Path
 from typing import List
 
 from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtGui import QMouseEvent
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTabWidget, QFrame, QGridLayout, QSizePolicy
 
+from open_bilibili_link.models import LiveAreaResponse
 from open_bilibili_link.services import BilibiliLiveService
 from open_bilibili_link.widgets.components.label import QClickableLabel
 
@@ -12,6 +14,7 @@ from open_bilibili_link.widgets.components.label import QClickableLabel
 class AreaSelector(QDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.area_data: List[LiveAreaResponse.LiveAreaCategory] = []
         self.setup_ui()
 
     def setup_ui(self):
@@ -32,8 +35,8 @@ class AreaSelector(QDialog):
 
     async def load_info(self):
         if BilibiliLiveService().logged_in:
-            area_data = await BilibiliLiveService().get_live_areas()
-            for category in area_data:
+            self.area_data = await BilibiliLiveService().get_live_areas()
+            for category in self.area_data:
                 self.cate_tabs.append(QFrame())
                 self.tab_widget.addTab(self.cate_tabs[-1], category.name)
                 self.init_tab(self.cate_tabs[-1], category.list)
@@ -45,5 +48,14 @@ class AreaSelector(QDialog):
             area_label = QClickableLabel(area.name)
             area_label.setMinimumWidth(100)
             area_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            area_label.clicked.connect(self.select_area)
             layout.addWidget(area_label, i // 6, i % 6)
         tab.setLayout(layout)
+
+    def select_area(self, _, target: QClickableLabel):
+        category = self.area_data[self.tab_widget.currentIndex()]
+        for area in category.list:
+            if area.name == target.text():
+                BilibiliLiveService().areaid = area.id
+                self.parent().label_area_content.setText(f'{area.parent_name}/{area.name}')
+                self.close()

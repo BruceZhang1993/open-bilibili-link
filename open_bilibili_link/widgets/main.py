@@ -5,6 +5,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QFrame, QHBoxLayout, QListView, QSizePolicy, QApplication
 from asyncqt import asyncClose
 
+from open_bilibili_link.config import ConfigManager
 from open_bilibili_link.services import BilibiliLiveService, BilibiliLiveDanmuService
 from open_bilibili_link.widgets.menu import MenuView, MenuFrame
 from open_bilibili_link.widgets.routes import RouteManager
@@ -25,6 +26,7 @@ class AppMainWindow(QMainWindow):
         self.pages = {}
         self.setup_ui()
         PluginManager().register_plugins()
+        print(ConfigManager())
 
     @asyncClose
     async def closeEvent(self, event):

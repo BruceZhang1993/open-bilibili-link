@@ -130,10 +130,9 @@ class DanmuWidget(QDockWidget):
             self.danmu_list_model.appendRow([QStandardItem(text)])
             self.danmu_list_view.scrollToBottom()
 
-    @asyncClose
-    async def closeEvent(self, _):
+    def closeEvent(self, _):
         BilibiliLiveDanmuService().unregister_callback(self.append_danmu)
 
     def load_danmu(self):
-        BilibiliLiveDanmuService().register_callback(self.append_danmu)
+        BilibiliLiveDanmuService().register_callback(self.append_danmu, external=False)
         asyncio.gather(BilibiliLiveDanmuService().ws_connect(self.roomid))

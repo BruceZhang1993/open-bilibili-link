@@ -86,3 +86,8 @@ class Singleton(type):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
+
+
+def reset_style(*args):
+    for o in args:
+        o.setContentsMargins(0, 0, 0, 0)

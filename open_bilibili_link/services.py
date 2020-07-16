@@ -510,13 +510,21 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
         super().__init__()
         self.ws = None
         self.callbacks = set()
+        self.external_callbacks = set()
         self.session = ClientSession()
 
-    def register_callback(self, callback):
-        self.callbacks.add(callback)
+    def register_callback(self, callback, external=True):
+        if external:
+            self.external_callbacks.add(callback)
+        else:
+            self.callbacks.add(callback)
 
     def unregister_callback(self, callback):
-        self.callbacks.remove(callback)
+        try:
+            self.callbacks.remove(callback)
+            self.external_callbacks.remove(callback)
+        except KeyError:
+            pass
         if len(self.callbacks) == 0:
             asyncio.gather(self.ws.close())
 
@@ -538,7 +546,7 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
         while True:
             try:
                 packet_len, header_len, ver, op, seq = unpack('!IHHII', data[0:16])
-            except Exception as e:
+            except:
                 break
             if len(data) < packet_len:
                 break
@@ -558,7 +566,7 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
             while True:
                 try:
                     packet_len, header_len, ver, op, seq = unpack('!IHHII', d[0:16])
-                except Exception as e:
+                except:
                     break
                 if len(d) < packet_len:
                     break
@@ -591,7 +599,7 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
                 else:
                     msg = {'name': '', 'content': d, 'msg_type': 'other'}
                 msgs.append(msg)
-            except Exception as e:
+            except:
                 pass
         return msgs
 
@@ -633,7 +641,7 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
                 if msg.type == WSMsgType.BINARY:
                     for data in self.decode_msg(msg.data):
                         danmu = DanmuData(**data)
-                        for cb in self.callbacks:
+                        for cb in self.callbacks.union(self.external_callbacks):
                             try:
                                 cb(danmu)
                             except Exception as err:
