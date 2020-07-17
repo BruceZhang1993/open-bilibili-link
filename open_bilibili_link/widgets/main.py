@@ -26,7 +26,6 @@ class AppMainWindow(QMainWindow):
         self.pages = {}
         self.setup_ui()
         PluginManager().register_plugins()
-        print(ConfigManager())
 
     @asyncClose
     async def closeEvent(self, event):

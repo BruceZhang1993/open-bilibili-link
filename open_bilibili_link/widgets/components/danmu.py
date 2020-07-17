@@ -122,6 +122,7 @@ class DanmuWidget(QDockWidget):
 
     def show_data(self):
         if self.roomid is not None:
+            asyncio.gather(self.load_history())
             self.load_danmu()
 
     def append_danmu(self, danmu: DanmuData):
@@ -132,6 +133,12 @@ class DanmuWidget(QDockWidget):
 
     def closeEvent(self, _):
         BilibiliLiveDanmuService().unregister_callback(self.append_danmu)
+
+    async def load_history(self):
+        danmus = await BilibiliLiveService().get_danmu_history(self.roomid)
+        for danmu in danmus:
+            self.danmu_list_model.appendRow([QStandardItem(f'{danmu.nickname}: {danmu.text}')])
+            self.danmu_list_view.scrollToBottom()
 
     def load_danmu(self):
         BilibiliLiveDanmuService().register_callback(self.append_danmu, external=False)

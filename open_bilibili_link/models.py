@@ -12,6 +12,7 @@ class OBSServiceData(BaseModel):
         use_auth: bool
         server: str
         key: str
+
     type: str
     settings: Settings
 
@@ -107,6 +108,7 @@ class LiveInfoData(BaseModel):
         current: int
         next: int
         medalInfo: Any
+
     achieves: int
     count: dict
     liveTime: int
@@ -220,6 +222,7 @@ class DanmuKeyData(BaseModel):
         port: int
         wss_port: int
         ws_port: int
+
     group: str
     business_id: int
     refresh_row_factor: float
@@ -280,6 +283,7 @@ class StopLiveResponse(BaseResponseV2):
     class StopLiveData(BaseModel):
         change: bool
         status: str
+
     msg: str
     data: Union[StopLiveData, list]
 
@@ -289,6 +293,7 @@ class LiveAreaResponse(BaseResponseV2):
         id: int
         name: str
         list: List[LiveArea]
+
     msg: str
     data: List[LiveAreaCategory]
 
@@ -310,6 +315,7 @@ class LiveLoopStatusResponse(BaseResponseV2):
         is_round: bool = Field(alias='isRound')
         updating: bool
         verify_round_status: bool = Field(alias='verifyRoundStatus')
+
     data: LiveLoopStatusData
 
 
@@ -324,6 +330,20 @@ class DanmuKeyResponse(BaseResponseV2):
 
 class RoomInitResponse(BaseResponseV2):
     data: RoomInitData
+
+
+class DanmuHistoryResponse(BaseResponseV2):
+    class DanmuHistoryData(BaseModel):
+        class DanmuHistory(BaseModel):
+            uid: int
+            nickname: str
+            vip: bool
+            svip: bool
+            timeline: datetime.datetime
+            text: str
+        admin: list
+        room: List[DanmuHistory]
+    data: DanmuHistoryData
 
 
 class SendGiftData(BaseModel):

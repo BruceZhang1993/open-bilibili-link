@@ -1,9 +1,11 @@
+from types import ModuleType
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel, QSizePolicy
 
 
 class PluginTile(QFrame):
-    def __init__(self, plugin, *args, **kwargs):
+    def __init__(self, plugin: ModuleType, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.plugin = plugin
         try:

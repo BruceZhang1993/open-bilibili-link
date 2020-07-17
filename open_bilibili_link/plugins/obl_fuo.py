@@ -1,4 +1,5 @@
 import asyncio
+import subprocess
 
 from open_bilibili_link.models import DanmuData
 from open_bilibili_link.services import BilibiliLiveDanmuService
@@ -11,14 +12,13 @@ __plugin_desc__ = 'FeelUOwn plugin for Bilibili danmu'
 from open_bilibili_link.utils import run_command
 
 
-def test_danmu_plugin(danmu: DanmuData):
+async def test_danmu_plugin(danmu: DanmuData):
     if danmu.msg_type == BilibiliLiveDanmuService.TYPE_DANMUKU and danmu.content.startswith('#FUO'):
         arguments = danmu.content[4:].strip().split()
         if len(arguments) > 0:
             print(f'弹幕点歌：{arguments}')
-            asyncio.gather(run_command('fuo', 'play', f'{arguments[0]}'
-                                                      f'{("-" + arguments[1]) if len(arguments) > 2 else ""}',
-                                       allow_fail=True))
+            await run_command('fuo', 'play', f'{arguments[0]}'
+                                             f'{("-" + arguments[1]) if len(arguments) > 2 else ""}', allow_fail=True)
 
 
 def register():

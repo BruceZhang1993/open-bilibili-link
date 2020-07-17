@@ -16,7 +16,7 @@ from aiohttp import ClientSession, CookieJar, TraceConfig, TraceRequestStartPara
 
 from open_bilibili_link import models
 from open_bilibili_link.models import UserInfoData, RoomInfoData, DanmuKeyResponse, DanmuKeyData, RoomInitResponse, \
-    DanmuData
+    DanmuData, RoomInitData, DanmuHistoryResponse
 from open_bilibili_link.utils import ping, Timer, color_hex_to_int, Singleton
 
 
@@ -487,6 +487,23 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
                 raise BilibiliServiceException(res.message, res.code)
             return res.data
 
+    @login_required
+    async def get_danmu_history(self, roomid=None) -> List[DanmuHistoryResponse.DanmuHistoryData.DanmuHistory]:
+        uri = f'https://{self.host}/xlive/web-room/v1/dM/gethistory'
+        csrf = self.get_csrf()
+        data = {
+            'roomid': roomid or (await self.roomid),
+            'csrf': csrf,
+            'csrf_token': csrf,
+            'visit_id': '',
+        }
+        async with self.session.post(uri, data=data,
+                                     params={'access_key': self.token_data.token_info.access_token}) as r:
+            res = models.DanmuHistoryResponse(**(await r.json()))
+            if res.code != 0:
+                raise BilibiliServiceException(res.message, res.code)
+            return res.data.room
+
 
 class BilibiliLiveDanmuService(metaclass=Singleton):
     # API 域名
@@ -509,6 +526,7 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
     def __init__(self):
         super().__init__()
         self.ws = None
+        self.timer: Optional[Timer] = None
         self.callbacks = set()
         self.external_callbacks = set()
         self.session = ClientSession()
@@ -526,6 +544,8 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
         except KeyError:
             pass
         if len(self.callbacks) == 0:
+            if self.timer is not None:
+                self.timer.cancel()
             asyncio.gather(self.ws.close())
 
     async def get_danmu_key(self, roomid) -> DanmuKeyData:
@@ -560,7 +580,6 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
                 break
             else:
                 data = data[packet_len:]
-
         for dm in dm_list_compressed:
             d = zlib.decompress(dm)
             while True:
@@ -577,7 +596,6 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
                     break
                 else:
                     d = d[packet_len:]
-
         for i, d in enumerate(dm_list):
             try:
                 msg = {}
@@ -619,23 +637,27 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
         print('[WS] Sending heartbeat package')
         await self.ws.send_bytes(self.encode_payload('[object Object]'))
 
-    async def ws_connect(self, roomid):
-        if self.ws and not self.ws.closed:
-            return
+    async def room_init(self, roomid) -> RoomInitData:
         room_init_uri = f'https://{self.LIVE_API_HOST}/room/v1/Room/room_init'
         room_init_params = {'id': roomid}
         async with self.session.get(room_init_uri, params=room_init_params) as r:
             res = RoomInitResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
-        room_init_data = res.data
+        return res.data
+
+    async def ws_connect(self, roomid):
+        loop = asyncio.get_event_loop()
+        if self.ws and not self.ws.closed:
+            return
+        room_init_data = await self.room_init(roomid)
         token_data = await self.get_danmu_key(room_init_data.room_id)
         async with self.session.ws_connect(self.DANMU_WS) as ws:
             self.ws = ws
             payload = {'uid': int(1e14 + 2e14 * random()), 'roomid': room_init_data.room_id, 'protover': 1,
                        'platform': 'web', 'clientver': '1.14.1', 'type': 2, 'key': token_data.token}
             await ws.send_bytes(self.encode_payload(payload, type_=self.TYPE_JOIN_ROOM))
-            timer = Timer(30, self.send_heatbeat)
+            self.timer = Timer(30, self.send_heatbeat)
             async for msg in ws:
                 msg: WSMessage
                 if msg.type == WSMsgType.BINARY:
@@ -643,7 +665,10 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
                         danmu = DanmuData(**data)
                         for cb in self.callbacks.union(self.external_callbacks):
                             try:
-                                cb(danmu)
+                                if asyncio.iscoroutinefunction(cb):
+                                    await cb(danmu)
+                                else:
+                                    loop.run_in_executor(None, cb, danmu)
                             except Exception as err:
                                 print('DanmuPushError: ' + str(err))
                 else:

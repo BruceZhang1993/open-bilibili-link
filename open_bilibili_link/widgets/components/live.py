@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QPushButton, QApplication
 from asyncqt import asyncSlot
 
+from open_bilibili_link.config import ConfigManager
 from open_bilibili_link.services import BilibiliLiveService, BilibiliServiceException, BilibiliLiveDanmuService
 from open_bilibili_link.utils import create_obs_configuration, check_exists, run_command
 from open_bilibili_link.widgets.components.button import CopyButton
@@ -163,3 +164,6 @@ class LiveControlCenter(QFrame):
             check_info = await BilibiliLiveService().check_info()
             self.sign_in_btn.setText('已签到' if check_info.status else '签到')
             self.sign_in_btn.setChecked(check_info.status)
+            auto_sign = ConfigManager().get('Live', 'AutoSign')
+            if auto_sign and not check_info.status:
+                await self.sign_in_btn.click()

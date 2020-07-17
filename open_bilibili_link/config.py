@@ -1,6 +1,7 @@
 import atexit
 from configparser import ConfigParser
 from pathlib import Path
+from typing import Optional
 
 from open_bilibili_link.utils import Singleton
 
@@ -12,7 +13,7 @@ class ConfigManager(object, metaclass=Singleton):
         if not self.CONFIG_FILE.exists():
             self.CONFIG_FILE.parent.mkdir(parents=True)
             self.CONFIG_FILE.touch()
-        self._parser = None
+        self._parser: Optional[ConfigParser] = None
 
     def load(self):
         self._parser = ConfigParser()
@@ -27,6 +28,9 @@ class ConfigManager(object, metaclass=Singleton):
             return self._parser
         self.load()
         return self._parser
+
+    def get(self, section: str, key: str):
+        return self.config.get(section, key, fallback=None)
 
     def save(self):
         with self.CONFIG_FILE.open('w') as f:

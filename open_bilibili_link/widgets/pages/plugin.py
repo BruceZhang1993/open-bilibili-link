@@ -23,7 +23,6 @@ class PluginPage(QFrame):
         reset_style(self, self.layout)
 
     def show_plugins(self):
-        print(self.manager.plugin_list)
         for i, plugin in enumerate(self.manager.plugin_list):
             tile = PluginTile(plugin)
             self.layout.addWidget(tile, i // 3, i % 3)
