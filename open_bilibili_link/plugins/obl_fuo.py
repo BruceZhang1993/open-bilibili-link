@@ -1,19 +1,20 @@
-import asyncio
-import subprocess
-
 from open_bilibili_link.models import DanmuData
 from open_bilibili_link.services import BilibiliLiveDanmuService
+from open_bilibili_link.utils import run_command
 
-
+# Plugin metadata
 __plugin_id__ = 'io.github.brucezhang1993.danmu_fuo'
 __plugin_name__ = 'FeelUOwn Danmu'
 __plugin_desc__ = 'FeelUOwn plugin for Bilibili danmu'
 
-from open_bilibili_link.utils import run_command
+# Loaded when plugin found
+__config__: dict = {}
+__loaded__ = False
 
 
 async def test_danmu_plugin(danmu: DanmuData):
-    if danmu.msg_type == BilibiliLiveDanmuService.TYPE_DANMUKU and danmu.content.startswith('#FUO'):
+    if danmu.msg_type == BilibiliLiveDanmuService.TYPE_DANMUKU and danmu.content. \
+            startswith(__config__.get('prefix', '/FUO')):
         arguments = danmu.content[4:].strip().split()
         if len(arguments) > 0:
             print(f'弹幕点歌：{arguments}')

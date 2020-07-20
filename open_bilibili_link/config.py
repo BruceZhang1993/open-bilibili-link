@@ -32,6 +32,9 @@ class ConfigManager(object, metaclass=Singleton):
     def get(self, section: str, key: str):
         return self.config.get(section, key, fallback=None)
 
+    def section(self, section: str):
+        return dict(self.config.items(section=section))
+
     def save(self):
         with self.CONFIG_FILE.open('w') as f:
             self._parser.write(f)

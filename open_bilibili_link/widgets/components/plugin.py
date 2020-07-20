@@ -15,6 +15,7 @@ class PluginTile(QFrame):
                 'description': plugin.__plugin_desc__,
                 'register': plugin.register,
                 'unregister': plugin.unregister,
+                'loaded': plugin.__loaded__,
             }
         except AttributeError:
             print(f'[Plugin] Unrecognized plugin {plugin}')
@@ -27,7 +28,7 @@ class PluginTile(QFrame):
         layout = QVBoxLayout()
         if self.plugin_info:
             plugin_name = QLabel(self.plugin_info['name'])
-            plugin_id = QLabel(self.plugin_info['id'])
+            plugin_id = QLabel(self.plugin_info['id'] + ' ' + str(self.plugin_info['loaded']))
             plugin_desc = QLabel(self.plugin_info['description'])
             layout.addWidget(plugin_name)
             layout.addWidget(plugin_id)

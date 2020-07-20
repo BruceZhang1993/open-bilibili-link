@@ -42,15 +42,21 @@ def main(args):
         sys.exit(0)
     PID_FILE.parent.mkdir(parents=True, exist_ok=True)
     PID_FILE.write_text(str(os.getpid()))
-    app = asyncqt.QApplication(sys.argv)
-    loop = asyncqt.QEventLoop(app)
-    asyncio.set_event_loop(loop)
-    win = AppMainWindow(app, args)
-    win.show()
-    with loop:
-        r = loop.run_forever()
+    try:
+        app = asyncqt.QApplication(sys.argv)
+        loop = asyncqt.QEventLoop(app)
+        asyncio.set_event_loop(loop)
+        win = AppMainWindow(app, args)
+        win.show()
+        with loop:
+            r = loop.run_forever()
+            PID_FILE.unlink(missing_ok=True)
+            sys.exit(r)
+    except Exception as err:
+        print('Fatal error: ' + str(err))
+    finally:
         PID_FILE.unlink(missing_ok=True)
-        sys.exit(r)
+        sys.exit(1)
 
 
 if __name__ == '__main__':

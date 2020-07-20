@@ -164,6 +164,6 @@ class LiveControlCenter(QFrame):
             check_info = await BilibiliLiveService().check_info()
             self.sign_in_btn.setText('已签到' if check_info.status else '签到')
             self.sign_in_btn.setChecked(check_info.status)
-            auto_sign = ConfigManager().get('Live', 'AutoSign')
+            auto_sign = ConfigManager().get('Live', 'autosign')
             if auto_sign and not check_info.status:
-                await self.sign_in_btn.click()
+                self.sign_in_btn.click()
