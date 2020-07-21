@@ -359,6 +359,20 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
                 raise BilibiliServiceException(res.message, res.code)
             return res.data
 
+    async def get_history_areas(self, roomid=None) -> List[models.LiveAreaHistoryResponse.HistoryLiveArea]:
+        """
+        获取历史直播分区信息
+        :raises: BilibiliServiceException
+        :return: 直播分区列表
+        :rtype: List[models.LiveAreaHistoryResponse.HistoryLiveArea]
+        """
+        uri = f'https://{self.host}/room/v1/Area/getMyChooseArea?roomid=496150'
+        async with self.session.get(uri, params={'roomid': roomid or (await self.roomid)}) as r:
+            res = models.LiveAreaHistoryResponse(**(await r.json()))
+            if res.code != 0:
+                raise BilibiliServiceException(res.message, res.code)
+            return res.data
+
     @login_required
     async def start_live(self, areaid: int = None) -> models.StartLiveData:
         """
@@ -673,3 +687,13 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
                                 print('DanmuPushError: ' + str(err))
                 else:
                     print(msg)
+
+
+async def main():
+    print(await BilibiliLiveService().get_history_areas())
+    await BilibiliLiveService().session.close()
+
+
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())

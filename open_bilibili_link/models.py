@@ -346,6 +346,16 @@ class DanmuHistoryResponse(BaseResponseV2):
     data: DanmuHistoryData
 
 
+class LiveAreaHistoryResponse(BaseResponseV2):
+    class HistoryLiveArea(BaseModel):
+        id: int
+        name: str
+        parent_id: int
+        parent_name: str
+        act_flag: int
+    data: List[HistoryLiveArea]
+
+
 class SendGiftData(BaseModel):
     draw: int
     gold: int
