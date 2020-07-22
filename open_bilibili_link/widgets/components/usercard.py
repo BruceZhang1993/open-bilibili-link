@@ -125,6 +125,8 @@ class UserCardLive(QFrame):
         area_row.addWidget(self.label_area_content)
         area_row.addWidget(self.label_area_edit)
 
+        self.label_tags = QLabel('')
+        self.label_news = QLabel('')
         self.label_desc = QLabel('')
         self.label_roomid.setTextFormat(Qt.RichText)
         self.label_roomid.setTextInteractionFlags(Qt.TextBrowserInteraction)
@@ -135,6 +137,8 @@ class UserCardLive(QFrame):
         # layout.addWidget(self.label_title)
         layout.addLayout(title_row)
         layout.addLayout(area_row)
+        layout.addWidget(self.label_tags)
+        layout.addWidget(self.label_news)
         layout.addWidget(self.label_desc)
         hlayout.addWidget(self.label_keyframe, 0, 0, Qt.AlignTop)
         hlayout.addLayout(layout, 0, 1, Qt.AlignTop)
@@ -160,11 +164,13 @@ class UserCardLive(QFrame):
             self.label_title_content.setReadOnly(True)
             self.label_title_edit.setEnabled(True)
 
-    async def set_room_info(self, room_info):
+    async def set_room_info(self, room_info, news):
         # self.top_label.setText('直播中' if room_info.live_status else '未开播')
         self.label_roomid.setText(
             f'房间号: {room_info.room_id} <a href="https://live.bilibili.com/{room_info.room_id}">Go</a>')
         self.label_title_content.setText(f'{room_info.title}')
+        self.label_tags.setText(f'个人标签：{room_info.tags}')
+        self.label_news.setText(f'直播公告：{news.content}')
         self.label_desc.setText(f'个人简介: {room_info.description}')
         self.label_area_content.setText(f'{room_info.parent_area_name}/{room_info.area_name}')
         pixmap = QPixmap()
@@ -221,8 +227,9 @@ class UserCard(QFrame):
             self.right_card.label_area_edit.show()
             user_info = await BilibiliLiveService().get_user_info()
             room = await BilibiliLiveService().get_room_info()
+            news = await BilibiliLiveService().get_live_news()
             self.main_card.set_user_info(user_info)
             # self.right_card.set_live_info(await BilibiliLiveService().live_info())
-            await self.right_card.set_room_info(room)
+            await self.right_card.set_room_info(room, news)
             self.main_card.set_avatar(await BilibiliLiveService().get_cached_face(user_info))
             self.set_background(await BilibiliLiveService().get_cached_background(room))

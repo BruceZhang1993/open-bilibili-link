@@ -356,6 +356,19 @@ class LiveAreaHistoryResponse(BaseResponseV2):
     data: List[HistoryLiveArea]
 
 
+class LiveNews(BaseModel):
+    roomid: int
+    uid: int
+    content: str
+    ctime: datetime.datetime
+    status: int
+    uname: str
+
+
+class LiveNewsResponse(BaseResponseV2):
+    data: LiveNews
+
+
 class SendGiftData(BaseModel):
     draw: int
     gold: int

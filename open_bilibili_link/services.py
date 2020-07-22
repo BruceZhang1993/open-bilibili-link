@@ -501,6 +501,14 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
                 raise BilibiliServiceException(res.message, res.code)
             return res.data
 
+    async def get_live_news(self, roomid=None):
+        uri = f'https://{self.host}/room_ex/v1/RoomNews/get'
+        async with self.session.get(uri, params={'roomid': roomid or (await self.roomid)}) as r:
+            res = models.LiveNewsResponse(**(await r.json()))
+            if res.code != 0:
+                raise BilibiliServiceException(res.message, res.code)
+            return res.data
+
     @login_required
     async def get_danmu_history(self, roomid=None) -> List[DanmuHistoryResponse.DanmuHistoryData.DanmuHistory]:
         uri = f'https://{self.host}/xlive/web-room/v1/dM/gethistory'
@@ -690,7 +698,7 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
 
 
 async def main():
-    print(await BilibiliLiveService().get_history_areas())
+    print(await BilibiliLiveService().get_live_news())
     await BilibiliLiveService().session.close()
 
 

@@ -55,12 +55,10 @@ class AppMainWindow(QMainWindow):
         self.menu_model = QStandardItemModel()
         self.menu_strings = ['home', 'plugin', 'setting']
         icon_base = Path(__file__).parent / 'images'
-        self.menu_icons = [QIcon((icon_base / 'home.svg').as_posix()),
-                           QIcon((icon_base / 'plugin.svg').as_posix()),
-                           QIcon((icon_base / 'setting.svg').as_posix())]
+        self.menu_icons = list(map(lambda s: QIcon((icon_base / f'{s}.svg').as_posix()), self.menu_strings))
         self.menu_model.appendColumn(list(map(lambda s: QStandardItem(s, ''), self.menu_icons)))
         self.down_menu_strings = ['exit']
-        self.down_menu_icons = [QIcon.fromTheme('exit')]
+        self.down_menu_icons = [QIcon((icon_base / 'exit.svg').as_posix())]
         self.down_menu_model = QStandardItemModel()
         self.down_menu_model.appendColumn(list(map(lambda s: QStandardItem(s, ''), self.down_menu_icons)))
         self.down_menu.setModel(self.down_menu_model)

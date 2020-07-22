@@ -54,7 +54,6 @@ def main(args):
             sys.exit(r)
     except Exception as err:
         print('Fatal error: ' + str(err))
-    finally:
         PID_FILE.unlink(missing_ok=True)
         sys.exit(1)
 
