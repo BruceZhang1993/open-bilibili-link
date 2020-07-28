@@ -65,6 +65,6 @@ class PluginManager(object, metaclass=Singleton):
                 if file.is_file() and file.name.startswith('obl_'):
                     p = importlib.import_module(file.stem)
                     p.__loaded__ = False
-                    p.__config__ = ConfigManager().section(p.__plugin_id__)
+                    p.__config__ = ConfigManager().get(p.__plugin_id__)
                     self._plugin_list.append(p)
             sys.path.remove(plugin_dir.as_posix())
