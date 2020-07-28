@@ -1,5 +1,5 @@
 import atexit
-from configparser import ConfigParser
+import toml
 from pathlib import Path
 from typing import Optional
 
@@ -7,7 +7,7 @@ from open_bilibili_link.utils import Singleton
 
 
 class ConfigManager(object, metaclass=Singleton):
-    CONFIG_FILE = Path.home() / '.config' / 'OBL' / 'default.ini'
+    CONFIG_FILE = Path.home() / '.config' / 'OBL' / 'default.toml'
 
     def __init__(self):
         if not self.CONFIG_FILE.exists():

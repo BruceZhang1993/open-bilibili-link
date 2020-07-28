@@ -12,6 +12,7 @@ pyqt5 = "*"
 aiohttp = "*"
 rsa = "*"
 pydantic = "*"
+toml = "*"
 
 [requires]
 python_version = "3.8"

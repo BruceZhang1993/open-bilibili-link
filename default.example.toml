@@ -3,4 +3,4 @@ autosign = 1
 
 [io.github.brucezhang1993.danmu_fuo]
 autostart = 1
-prefix = /SONG
+prefix = "/SONG"
