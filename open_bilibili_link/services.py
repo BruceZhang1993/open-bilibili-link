@@ -96,6 +96,15 @@ class BilibiliBaseService:
     def logged_in(self):
         return self.token_data is not None
 
+    @login_required
+    def with_token(self, data=None):
+        return dict(data, access_key=self.token_data.token_info.access_token)
+
+    @login_required
+    def with_csrf(self, data=None):
+        csrf = self.get_csrf()
+        return dict(data, csrf=csrf, csrf_token=csrf)
+
     def calc_sign(self, param: str) -> str:
         """
         计算签名
@@ -156,7 +165,7 @@ class BilibiliBaseService:
     async def stat(self):
         uri = f'https://{self.MAIN_API_HOST}/x/web-interface/nav/stat'
         async with self.session.get(uri, headers=self.DEFAULT_HEADERS,
-                                    params={'access_key': self.token_data.token_info.access_token}) as r:
+                                    params=self.with_token()) as r:
             return await r.json()
 
     @login_required
@@ -198,7 +207,7 @@ class BilibiliBaseService:
         headers['Host'] = self.MAIN_API_HOST
         headers['Referer'] = f'https://space.bilibili.com/{self.get_user_id()}/'
         async with self.session.get(uri, headers=headers,
-                                    params={'access_key': self.token_data.token_info.access_token}) as r:
+                                    params=self.with_token()) as r:
             res = models.UserInfoResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -302,7 +311,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         :rtype: models.LiveInfoData
         """
         uri = f'https://{self.host}/live_user/v1/UserInfo/live_info'
-        async with self.session.get(uri, params={'access_key': self.token_data.token_info.access_token}) as r:
+        async with self.session.get(uri, params=self.with_token()) as r:
             res = models.LiveInfoResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -312,8 +321,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
     @login_required
     async def get_room_info(self):
         uri = f'https://{self.host}/room/v1/Room/get_info'
-        async with self.session.get(uri, params={'access_key': self.token_data.token_info.access_token,
-                                                 'room_id': await self.roomid}) as r:
+        async with self.session.get(uri, params=self.with_token({'room_id': await self.roomid})) as r:
             res = models.RoomInfoResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -324,7 +332,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
     @login_required
     async def check_info(self):
         uri = f'https://{self.host}/xlive/web-ucenter/v1/sign/WebGetSignInfo'
-        async with self.session.get(uri, params={'access_key': self.token_data.token_info.access_token}) as r:
+        async with self.session.get(uri, params=self.with_token()) as r:
             res = models.LiveCheckInfoResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -339,7 +347,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         :rtype: models.LiveCheckinData
         """
         uri = f'https://{self.host}/xlive/web-ucenter/v1/sign/DoSign'
-        async with self.session.get(uri, params={'access_key': self.token_data.token_info.access_token}) as r:
+        async with self.session.get(uri, params=self.with_token()) as r:
             res = models.LiveCheckinResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -384,17 +392,9 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         :rtype: models.StartLiveData
         """
         uri = f'https://{self.LIVE_API_HOST}/room/v1/Room/startLive'
-        csrf = self.get_csrf()
-        data = {
-            'room_id': await self.roomid,
-            'platform': 'pc',
-            'area_v2': areaid or (await self.areaid),
-            'csrf_token': csrf,
-            'csrf': csrf,
-        }
-        async with self.session.post(uri,
-                                     params={'access_key': self.token_data.token_info.access_token},
-                                     data=data) as r:
+        data = self.with_csrf({'room_id': await self.roomid, 'platform': 'pc',
+                               'area_v2': areaid or (await self.areaid)})
+        async with self.session.post(uri, params=self.with_token(), data=data) as r:
             res = models.StartLiveResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -403,16 +403,8 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
     @login_required
     async def stop_live(self):
         uri = f'https://{self.LIVE_API_HOST}/room/v1/Room/stopLive'
-        csrf = self.get_csrf()
-        data = {
-            'room_id': await self.roomid,
-            'platform': 'pc',
-            'csrf_token': csrf,
-            'csrf': csrf,
-        }
-        async with self.session.post(uri,
-                                     params={'access_key': self.token_data.token_info.access_token},
-                                     data=data) as r:
+        data = self.with_csrf({'room_id': await self.roomid, 'platform': 'pc'})
+        async with self.session.post(uri, params=self.with_token(), data=data) as r:
             res = models.StopLiveResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -427,20 +419,12 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             description str: 个人简介
         """
         uri = f'https://{self.LIVE_API_HOST}/room/v1/Room/update'
-        csrf = self.get_csrf()
         uid = self.get_user_id()
-        data = {
-            'room_id': await self.roomid,
-            'uid': uid,
-            'csrf_token': csrf,
-            'csrf': csrf,
-        }
+        data = self.with_csrf({'room_id': await self.roomid, 'uid': uid})
         for key, value in kwargs.items():
             if value is not None:
                 data[key] = value
-        async with self.session.post(uri,
-                                     params={'access_key': self.token_data.token_info.access_token},
-                                     data=data) as r:
+        async with self.session.post(uri, params=self.with_token(), data=data) as r:
             res = models.BaseResponseV2(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -448,7 +432,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
     @login_required
     async def get_live_code(self):
         uri = f'https://{self.LIVE_API_HOST}/live_stream/v1/StreamList/get_stream_by_roomId'
-        params = {'room_id': await self.roomid, 'access_key': self.token_data.token_info.access_token}
+        params = self.with_token({'room_id': await self.roomid})
         async with self.session.get(uri, params=params) as r:
             res = models.LiveCodeResponse(**(await r.json()))
             if res.code != 0:
@@ -458,7 +442,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
     @login_required
     async def get_loop_status(self):
         uri = f'https://{self.host}/i/api/round'
-        async with self.session.get(uri, params={'access_key': self.token_data.token_info.access_token}) as r:
+        async with self.session.get(uri, params=self.with_token()) as r:
             res = models.LiveLoopStatusResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -467,14 +451,8 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
     @login_required
     async def set_loop_status(self, status: bool):
         uri = f'https://{self.host}/i/ajaxRoundOn'
-        csrf = self.get_csrf()
-        data = {
-            'on': int(status),
-            'csrf': csrf,
-            'csrf_token': csrf,
-        }
-        async with self.session.post(uri, data=data,
-                                     params={'access_key': self.token_data.token_info.access_token}) as r:
+        data = self.with_csrf({'on': int(status)})
+        async with self.session.post(uri, data=data, params=self.with_token()) as r:
             res = models.BaseResponseV2(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -482,8 +460,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
     @login_required
     async def send_danmu(self, roomid, content, color='#ffffff', fontsize=25, mode=1, bubble=0):
         uri = f'https://{self.host}/msg/send'
-        csrf = self.get_csrf()
-        data = {
+        data = self.with_csrf({
             'color': color_hex_to_int(color),
             'fontsize': fontsize,
             'mode': mode,
@@ -491,11 +468,8 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             'rnd': int(time()),
             'roomid': roomid,
             'bubble': bubble,
-            'csrf_token': csrf,
-            'csrf': csrf,
-        }
-        async with self.session.post(uri, data=data,
-                                     params={'access_key': self.token_data.token_info.access_token}) as r:
+        })
+        async with self.session.post(uri, data=data, params=self.with_token()) as r:
             res = models.BaseResponseV2(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -510,17 +484,21 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             return res.data
 
     @login_required
+    async def update_live_news(self, content):
+        uri = f'https://{self.host}/room_ex/v1/RoomNews/update'
+        data = self.with_csrf({'roomid': await self.roomid, 'content': content})
+        async with self.session.post(uri, data=data,
+                                     params=self.with_token()) as r:
+            res = models.BaseResponseV2(**(await r.json()))
+            if res.code != 0:
+                raise BilibiliServiceException(res.message, res.code)
+            return res.data
+
+    @login_required
     async def get_danmu_history(self, roomid=None) -> List[DanmuHistoryResponse.DanmuHistoryData.DanmuHistory]:
         uri = f'https://{self.host}/xlive/web-room/v1/dM/gethistory'
-        csrf = self.get_csrf()
-        data = {
-            'roomid': roomid or (await self.roomid),
-            'csrf': csrf,
-            'csrf_token': csrf,
-            'visit_id': '',
-        }
-        async with self.session.post(uri, data=data,
-                                     params={'access_key': self.token_data.token_info.access_token}) as r:
+        data = self.with_csrf({'roomid': roomid or (await self.roomid), 'visit_id': ''})
+        async with self.session.post(uri, data=data, params=self.with_token()) as r:
             res = models.DanmuHistoryResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -698,7 +676,7 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
 
 
 async def main():
-    print(await BilibiliLiveService().get_live_news())
+    print(await BilibiliLiveService().update_live_news('11'))
     await BilibiliLiveService().session.close()
 
 
