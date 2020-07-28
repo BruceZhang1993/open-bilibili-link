@@ -98,10 +98,14 @@ class BilibiliBaseService:
 
     @login_required
     def with_token(self, data=None):
+        if data is None:
+            data = {}
         return dict(data, access_key=self.token_data.token_info.access_token)
 
     @login_required
     def with_csrf(self, data=None):
+        if data is None:
+            data = {}
         csrf = self.get_csrf()
         return dict(data, csrf=csrf, csrf_token=csrf)
 
