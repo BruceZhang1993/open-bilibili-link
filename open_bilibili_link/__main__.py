@@ -1,29 +1,41 @@
 import argparse
 import asyncio
+import inspect
 import os
 import sys
 from asyncio import iscoroutinefunction
 from pathlib import Path
+
+from open_bilibili_link.cli import CliApp
 
 PID_FILE = Path('/') / 'tmp' / 'obl.pid'
 
 
 def init():
     parser = argparse.ArgumentParser(description='Open bilibili link')
-    parser.add_argument('--version', '-V', action='store_true', default=False, help='show version')
-    parser.add_argument('--verbose', '-v', action='store_true', default=False, help='verbose mode')
-    parser.add_argument('uri', nargs='?', help='uri')
+    subparsers = parser.add_subparsers(help='Subcommands')
+    gui_parser = subparsers.add_parser('gui', help='Gui mode')
+    gui_parser.set_defaults(command='gui')
+    gui_parser.add_argument('uri', nargs='?', help='uri')
+    for i in filter(lambda property_: not property_.startswith('__'), dir(CliApp)):
+        subp = subparsers.add_parser(i, help=f'Subcommand {i}')
+        for param in inspect.signature(getattr(CliApp, i)).parameters.values():
+            if param.name == 'self':
+                continue
+            subp.add_argument(param.name, type=param.annotation, help=param.name, default=param.default)
+        subp.set_defaults(command=i)
     return parser.parse_args()
 
 
 def main(args):
-    if args.uri and not args.uri.startswith('obl://'):
-        from open_bilibili_link.cli import CliApp
+    if args.command != 'gui':
         try:
-            fun = getattr(CliApp(args), args.uri)
+            fun = getattr(CliApp(args), args.command)
             if iscoroutinefunction(fun):
                 loop = asyncio.get_event_loop()
-                loop.run_until_complete(fun())
+                params = vars(args)
+                params.pop('command')
+                loop.run_until_complete(fun(**params))
             else:
                 fun()
             sys.exit(0)
