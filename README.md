@@ -4,8 +4,18 @@ Working in progress
 #### Development
 ```shell script
 pipenv install
-python3 -m open_bilibili_link
+# Print help
+python3 -m open_bilibili_link --help
+# Run GUI to default page
+python3 -m open_bilibili_link gui
+# Login from Cli
+python3 -m open_bilibili_link login [Username] [Password]
+# Checkin for current account
+python3 -m open_bilibili_link checkin
 ```
+
+#### Commands
+gui login checkin
 
 #### Features
 - [x] 帐号密码登录
