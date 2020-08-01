@@ -5,6 +5,7 @@ import os
 import sys
 from asyncio import iscoroutinefunction
 from pathlib import Path
+from typing import Any
 
 from open_bilibili_link.cli import CliApp
 
@@ -17,12 +18,13 @@ def init():
     gui_parser = subparsers.add_parser('gui', help='Gui mode')
     gui_parser.set_defaults(command='gui')
     gui_parser.add_argument('uri', nargs='?', help='uri')
-    for i in filter(lambda property_: not property_.startswith('__'), dir(CliApp)):
+    for i in filter(lambda property_: not property_.startswith('_'), dir(CliApp)):
         subp = subparsers.add_parser(i, help=f'Subcommand {i}')
         for param in inspect.signature(getattr(CliApp, i)).parameters.values():
             if param.name == 'self':
                 continue
-            subp.add_argument(param.name, type=param.annotation, help=param.name, default=param.default)
+            subp.add_argument(param.name, type=None if param.annotation == inspect.Parameter.empty else param.annotation,
+                              help=param.name, default=param.default)
         subp.set_defaults(command=i)
     return parser.parse_args()
 
@@ -31,13 +33,13 @@ def main(args):
     if args.command != 'gui':
         try:
             fun = getattr(CliApp(args), args.command)
+            params = vars(args)
+            params.pop('command')
             if iscoroutinefunction(fun):
                 loop = asyncio.get_event_loop()
-                params = vars(args)
-                params.pop('command')
                 loop.run_until_complete(fun(**params))
             else:
-                fun()
+                fun(**params)
             sys.exit(0)
         except AttributeError:
             print(f'Unknown command: {args.uri}')
