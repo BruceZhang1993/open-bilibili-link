@@ -62,6 +62,7 @@ class AreaSelector(QDialog):
             for area in self.history:
                 if area.name == target.text():
                     BilibiliLiveService().areaid = area.id
+                    asyncio.gather(BilibiliLiveService().update_room(area_id=area.id))
                     self.parent().label_area_content.setText(f'{area.parent_name}/{area.name}')
                     self.close()
             return
@@ -70,4 +71,5 @@ class AreaSelector(QDialog):
             if area.name == target.text():
                 BilibiliLiveService().areaid = area.id
                 self.parent().label_area_content.setText(f'{area.parent_name}/{area.name}')
+                asyncio.gather(BilibiliLiveService().update_room(area_id=area.id))
                 self.close()

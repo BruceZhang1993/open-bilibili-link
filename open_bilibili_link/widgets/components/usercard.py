@@ -159,7 +159,7 @@ class UserCardLive(QFrame):
         else:
             self.label_title_edit.setText('...')
             self.label_title_edit.setEnabled(False)
-            await BilibiliLiveService().update_live_heading(title=self.label_title_content.text())
+            await BilibiliLiveService().update_room(title=self.label_title_content.text())
             self.label_title_edit.setText('修改')
             self.label_title_content.setReadOnly(True)
             self.label_title_edit.setEnabled(True)

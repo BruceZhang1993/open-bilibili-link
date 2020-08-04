@@ -2,7 +2,7 @@ import asyncio
 
 from open_bilibili_link.models import DanmuData
 from open_bilibili_link.services import BilibiliLiveService, BilibiliServiceException, BilibiliLiveDanmuService
-from open_bilibili_link.widgets.components.danmu import DanmuPusher
+from open_bilibili_link.widgets.components.danmu import DanmuPusher, DanmuParser
 
 
 class CliApp(object):
@@ -30,7 +30,9 @@ class CliApp(object):
             print(e.args)
 
     def _danmu(self, danmu: DanmuData):
-        print(danmu)
+        text = DanmuParser.parse(danmu)
+        if text is not None:
+            print(text)
 
     def _danmu_off(self, _, __):
         print('Gently shutting down...')
@@ -42,6 +44,8 @@ class CliApp(object):
             return
         if roomid == 0:
             roomid = await BilibiliLiveService().roomid
+        room_data = await BilibiliLiveDanmuService().room_init(roomid)
+        roomid = room_data.room_id
         import signal
         signal.signal(signal.SIGINT, self._danmu_off)
         if output == 'stdout':
@@ -53,7 +57,7 @@ class CliApp(object):
         danmus = await BilibiliLiveService().get_danmu_history(roomid)
         for danmu in danmus:
             if output == 'stdout':
-                print(danmu)
+                print(f'{danmu.nickname}: {danmu.text}')
             elif output == 'file':
                 danmu_pusher.file.write(f'{danmu.nickname}: {danmu.text}\n')
                 danmu_pusher.file.flush()

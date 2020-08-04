@@ -415,12 +415,13 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             return res.data
 
     @login_required
-    async def update_live_heading(self, **kwargs):
+    async def update_room(self, **kwargs):
         """
         :param kwargs: See kwargs
         Kwargs:
             title str: 直播标题
             description str: 个人简介
+            area_id str: 直播分区
         """
         uri = f'https://{self.LIVE_API_HOST}/room/v1/Room/update'
         uid = self.get_user_id()

@@ -29,7 +29,7 @@ def init():
             else:
                 arg_ = {}
                 if param.default is not None:
-                    arg_['nargs'] = '*'
+                    arg_['nargs'] = '?'
                 subp.add_argument(param.name, **arg_, type=None if param.annotation == inspect.Parameter.empty else param.annotation,
                                   help=param.name, default=param.default)
         subp.set_defaults(command=i)
