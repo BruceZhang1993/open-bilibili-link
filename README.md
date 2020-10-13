@@ -15,7 +15,14 @@ python3 -m open_bilibili_link checkin
 ```
 
 #### Commands
-gui login checkin
+
+```
+gui ([OBL链接])  启动图形界面
+login ([用户名] [密码]) (--login_type=cookie)  登录
+checkin  直播中心签到
+danmu [直播间ID] ([--output=stdout|file]) 直播弹幕鸡 -- 支持输出到文件 文件可在 OBS 中加载为聊天模式文本源
+logout 退出登录
+```
 
 #### Cookie 登录流程
 
