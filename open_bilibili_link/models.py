@@ -256,8 +256,10 @@ class HashKeyResponse(BaseResponse):
 
 
 class LoginResponse(BaseResponse):
+    class VerifyUrlData(BaseModel):
+        url: str
     message: Optional[str]
-    data: Optional[LoginData]
+    data: Union[LoginData, VerifyUrlData]
 
 
 class UserInfoResponse(BaseResponseV2):

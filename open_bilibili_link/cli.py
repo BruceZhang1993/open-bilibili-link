@@ -2,6 +2,7 @@ import asyncio
 
 from open_bilibili_link.models import DanmuData
 from open_bilibili_link.services import BilibiliLiveService, BilibiliServiceException, BilibiliLiveDanmuService
+from open_bilibili_link.utils import run_command, timed_input, save_cookie
 from open_bilibili_link.widgets.components.danmu import DanmuPusher, DanmuParser
 
 
@@ -9,15 +10,38 @@ class CliApp(object):
     def __init__(self, args):
         self.args = args
 
-    async def login(self, username: str, password: str):
+    async def login(self, *, login_type: str = 'account'):
+        f = getattr(self, login_type + '_login')
+        if f is None:
+            print(f'未知的登录方式 {login_type} 可选值 [account,cookie]')
+            return
+        await f()
+
+    async def cookie_login(self):
+        if BilibiliLiveService().logged_in:
+            print('Already logged in')
+            await BilibiliLiveService().session.close()
+            return
+        cookie = await timed_input('Cookie:\n')
+        save_cookie(cookie, BilibiliLiveService.COOKIE_FILE, '.live.bilibili.com')
+        print('Cookie 登录成功')
+
+    async def account_login(self):
         if BilibiliLiveService().logged_in:
             print('Already logged in')
             await BilibiliLiveService().session.close()
             return
         try:
+            username = await timed_input('Username: ')
+            password = await timed_input('Password: ')
             print(await BilibiliLiveService().login(username, password))
         except BilibiliServiceException as e:
-            print(e.args)
+            print(f'[{e.args[0]}] 登录失败，请尝试使用 Cookie 登录 [--login_type=cookie]')
+
+    def logout(self):
+        if BilibiliLiveService().logged_in:
+            BilibiliLiveService().TOKEN_FILE.unlink(missing_ok=True)
+            print('Logged out')
 
     async def checkin(self):
         if not BilibiliLiveService().logged_in:

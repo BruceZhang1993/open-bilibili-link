@@ -17,9 +17,21 @@ python3 -m open_bilibili_link checkin
 #### Commands
 gui login checkin
 
+#### Cookie 登录流程
+
+_如帐号密码登录异常请使用 Cookie 登录方式_
+
+- F12 打开浏览器调试工具
+- 进入 [直播个人中心](https://link.bilibili.com/p/center/index) 并登录
+- 点击任意 XHR 类型请求，右侧 Request Header 请求头完整复制 Cookie
+- 执行 `python3 -m open_bilibili_link login --login_type=cookie`
+- 粘贴完整 Cookie 并回车
+- 可执行 `python3 -m open_bilibili_link checkin` 测试签到接口是否正常
+- 执行 `python3 -m open_bilibili_link gui` 打开图形界面
+
 #### Features
 - [x] 帐号密码登录
-- [ ] 验证码处理
+- [x] Cookie 登录
 - [x] 直播签到
 - [x] 用户基础信息
 - [x] 直播间信息

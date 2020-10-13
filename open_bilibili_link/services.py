@@ -1,23 +1,24 @@
 import asyncio
+import base64
 import json
 import zlib
 from base64 import b64encode
 from hashlib import md5
 from pathlib import Path
-from pprint import pprint
 from random import random
 from struct import unpack
 from time import time
-from typing import List, Callable, Optional
+from typing import List, Optional
 from urllib.parse import quote_plus
 
 import rsa
 from aiohttp import ClientSession, CookieJar, TraceConfig, TraceRequestStartParams, WSMsgType, WSMessage
+from yarl import URL
 
 from open_bilibili_link import models
 from open_bilibili_link.models import UserInfoData, RoomInfoData, DanmuKeyResponse, DanmuKeyData, RoomInitResponse, \
     DanmuData, RoomInitData, DanmuHistoryResponse
-from open_bilibili_link.utils import ping, Timer, color_hex_to_int, Singleton
+from open_bilibili_link.utils import ping, Timer, color_hex_to_int, Singleton, run_command
 
 
 def login_required(func):
@@ -29,7 +30,7 @@ def login_required(func):
     """
 
     def wrapper(*args, **kwargs):
-        if not args[0].token_data:
+        if not args[0].token_data and not args[0].COOKIE_FILE.exists():
             raise BilibiliServiceException('Login required', -90001)
         return func(*args, **kwargs)
 
@@ -52,7 +53,11 @@ class BilibiliBaseService:
     SALT = '560c52ccd288fed045859ed18bffd973'
 
     # 默认请求信息
-    DEFAULT_HEADERS = {'User-Agent': 'Mozilla/5.0 BilibiliLive/1.0'}
+    DEFAULT_HEADERS = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36',
+        'Origin': 'https://link.bilibili.com',
+        'Referer': 'https://link.bilibili.com/p/center/index'
+    }
 
     # 接口请求域名
     PASSPORT_API_HOST = 'passport.bilibili.com'
@@ -65,6 +70,7 @@ class BilibiliBaseService:
     # 项目默认配置
     CACHE_DIR = Path.home() / '.cache' / 'OBL'
     TOKEN_FILE = CACHE_DIR / 'token.json'
+    COOKIE_FILE = CACHE_DIR / 'cookiejar'
     FACE_CACHE_DIR = CACHE_DIR / 'faces'
     IMAGE_CACHE_DIR = CACHE_DIR / 'images'
 
@@ -72,7 +78,11 @@ class BilibiliBaseService:
         self.cookie_jar = CookieJar()
         self.token_data = None
         if self.TOKEN_FILE.exists():
+            print('Loading token')
             self.token_data = models.LoginData.parse_file(self.TOKEN_FILE)
+        if self.COOKIE_FILE.exists():
+            print('Loading cookie...')
+            self.cookie_jar.load(self.COOKIE_FILE)
         self.trace = TraceConfig()
         self.trace.on_connection_create_end.append(self.on_connected)
         self.trace.on_request_start.append(self.on_request_start)
@@ -94,12 +104,14 @@ class BilibiliBaseService:
 
     @property
     def logged_in(self):
-        return self.token_data is not None
+        return self.token_data is not None or self.COOKIE_FILE.exists()
 
     @login_required
     def with_token(self, data=None):
         if data is None:
             data = {}
+        if self.token_data is None:
+            return data
         return dict(data, access_key=self.token_data.token_info.access_token)
 
     @login_required
@@ -136,9 +148,11 @@ class BilibiliBaseService:
                 raise BilibiliServiceException('', res.code)
             return res.data
 
-    async def login(self, username: str, password: str) -> models.LoginData:
+    async def login(self, username: str, password: str, captcha: str = '') -> models.LoginData:
         """
         帐号密码登录
+        :param captcha: 验证码
+        :type captcha: str
         :param username: 用户名
         :type username: str
         :param password: 密码
@@ -151,15 +165,18 @@ class BilibiliBaseService:
         if not hash_data:
             raise BilibiliServiceException('get hash failed', -90000)
         uri = f'https://{self.PASSPORT_API_HOST}/api/v3/oauth2/login'
-        param = f"appkey={self.APPKEY}&password=" \
+        param = f"appkey={self.APPKEY}&captcha={captcha}&password=" \
                 f"{quote_plus(b64encode(rsa.encrypt(f'{hash_data.hash}{password}'.encode(), hash_data.pubkey)))}" \
                 f"&username={quote_plus(username)}"
         data = f'{param}&sign={self.calc_sign(param)}'
         headers = self.DEFAULT_HEADERS
         headers['Content-type'] = 'application/x-www-form-urlencoded'
         async with self.session.post(uri, data=data, headers=headers) as r:
+            print(await r.json())
             res = models.LoginResponse(**(await r.json()))
-            if res.code != 0:
+            if res.code == -105:
+                raise BilibiliServiceException(res.data.url, res.code)
+            elif res.code != 0:
                 raise BilibiliServiceException(res.message or '', res.code)
             res.data.save_to_file(self.TOKEN_FILE)
             self.token_data = res.data
@@ -180,6 +197,10 @@ class BilibiliBaseService:
         :rtype: int
         :raises: BilibiliServiceException
         """
+        if self.COOKIE_FILE.exists():
+            for cookie in self.cookie_jar:
+                if cookie.key == 'DedeUserID':
+                    return int(cookie.value)
         for cookie in self.token_data.cookie_info.cookies:
             if cookie.name == 'DedeUserID':
                 return int(cookie.value)
@@ -193,6 +214,10 @@ class BilibiliBaseService:
         :return: csrf 字符串
         :rtype: str
         """
+        if self.COOKIE_FILE.exists():
+            for cookie in self.cookie_jar:
+                if cookie.key == 'bili_jct':
+                    return cookie.value
         for cookie in self.token_data.cookie_info.cookies:
             if cookie.name == 'bili_jct':
                 return cookie.value
@@ -316,6 +341,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         """
         uri = f'https://{self.host}/live_user/v1/UserInfo/live_info'
         async with self.session.get(uri, params=self.with_token()) as r:
+            print(self.cookie_jar.filter_cookies(URL(self.host)))
             res = models.LiveInfoResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -351,6 +377,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         :rtype: models.LiveCheckinData
         """
         uri = f'https://{self.host}/xlive/web-ucenter/v1/sign/DoSign'
+        print(self.cookie_jar.filter_cookies(URL(uri)))
         async with self.session.get(uri, params=self.with_token()) as r:
             res = models.LiveCheckinResponse(**(await r.json()))
             if res.code != 0:
@@ -681,7 +708,8 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
 
 
 async def main():
-    print(await BilibiliLiveService().update_live_news('11'))
+    path = await BilibiliLiveService().captcha()
+    asyncio.ensure_future(run_command('xdg-open', path.as_posix(), allow_fail=True))
     await BilibiliLiveService().session.close()
 
 

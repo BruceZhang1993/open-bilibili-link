@@ -13,6 +13,7 @@ aiohttp = "*"
 rsa = "*"
 pydantic = "*"
 toml = "*"
+PyQtWebEngine = "*"
 
 [requires]
 python_version = "3.8"
