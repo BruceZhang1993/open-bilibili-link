@@ -399,7 +399,7 @@ class WelcomeData(BaseModel):
     is_admin: bool
     svip: bool
     vip: bool
-    mock_effect: int
+    mock_effect: Optional[int]
 
 
 class RoomBannerData(BaseModel):

@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QPushButton,
 from asyncqt import asyncSlot
 
 from open_bilibili_link.config import ConfigManager
+from open_bilibili_link.logger import LogManager
 from open_bilibili_link.services import BilibiliLiveService, BilibiliServiceException, BilibiliLiveDanmuService
 from open_bilibili_link.utils import create_obs_configuration, check_exists, run_command
 from open_bilibili_link.widgets.components.button import CopyButton
@@ -123,8 +124,8 @@ class LiveControlCenter(QFrame):
         _, exists = await check_exists('obs')
         if not exists:
             Toast.toast(self, '未安装 OBS Studio')
-        await run_command('obs', '--profile', 'BilibiliLive')
-        print('obs end')
+        _, __, code = await run_command('obs', '--profile', 'BilibiliLive')
+        LogManager.instance().debug(f'[Shell] OBS 命令执行完成（进程结束 exitcode: {code}）')
 
     def update_obs(self):
         create_obs_configuration(self.live_rtmp.text().strip(), self.live_code.text().strip())
@@ -164,6 +165,6 @@ class LiveControlCenter(QFrame):
             check_info = await BilibiliLiveService().check_info()
             self.sign_in_btn.setText('已签到' if check_info.status else '签到')
             self.sign_in_btn.setChecked(check_info.status)
-            auto_sign = ConfigManager().get('Live', 'autosign')
+            auto_sign = ConfigManager().get('live', 'autosign')
             if auto_sign and not check_info.status:
                 self.sign_in_btn.click()

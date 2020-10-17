@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from open_bilibili_link.config import ConfigManager
+from open_bilibili_link.logger import LogManager
 from open_bilibili_link.utils import Singleton
 
 
@@ -23,22 +24,22 @@ class PluginManager(object, metaclass=Singleton):
         for plugin in self.plugin_list:
             if plugin.__plugin_id__ == pid:
                 self.register_plugin(plugin)
-        print(f'[Plugin] Plugin {pid} not found')
+        LogManager.instance().warning(f'[Plugin] 未找到插件 {pid}')
 
     def unregister_by_id(self, pid):
         for plugin in self.plugin_list:
             if plugin.__plugin_id__ == pid:
                 self.unregister_plugin(plugin)
-        print(f'[Plugin] Plugin {pid} not found')
+        LogManager.instance().warning(f'[Plugin] 未找到插件 {pid}')
 
     @staticmethod
     def register_plugin(plugin):
         try:
             plugin.register()
             plugin.__loaded__ = True
-            print(f'[Plugin] {plugin.__plugin_id__} loaded')
+            LogManager.instance().debug(f'[Plugin] {plugin.__plugin_id__} 已加载')
         except Exception as e:
-            print(f'[Plugin] {e}')
+            LogManager.instance().warning(f'[Plugin] 插件加载异常 {str(e)}')
 
     @staticmethod
     def unregister_plugin(plugin):
@@ -46,11 +47,11 @@ class PluginManager(object, metaclass=Singleton):
             plugin.unregister()
             plugin.__loaded__ = False
         except Exception as e:
-            print(f'[Plugin] {e}')
+            LogManager.instance().warning(f'[Plugin] 插件加载异常 {str(e)}')
 
     def register_plugins(self):
         for plugin in self.plugin_list:
-            is_auto = ConfigManager().get(plugin.__plugin_id__, 'autostart')
+            is_auto = ConfigManager().get(*(plugin.__plugin_id__.split('.')), 'autostart')
             if not is_auto:
                 continue
             self.register_plugin(plugin)
@@ -65,6 +66,6 @@ class PluginManager(object, metaclass=Singleton):
                 if file.is_file() and file.name.startswith('obl_'):
                     p = importlib.import_module(file.stem)
                     p.__loaded__ = False
-                    p.__config__ = ConfigManager().get(p.__plugin_id__)
+                    p.__config__ = ConfigManager().get(*(p.__plugin_id__.split('.'))) # noqa
                     self._plugin_list.append(p)
             sys.path.remove(plugin_dir.as_posix())

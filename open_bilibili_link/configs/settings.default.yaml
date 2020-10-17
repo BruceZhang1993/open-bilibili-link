@@ -1,0 +1,9 @@
+live:
+  autosign: true
+
+io:
+  github:
+    brucezhang1993:
+      danmu_fuo:
+        auto_start: true
+        prefix: '/SONG'

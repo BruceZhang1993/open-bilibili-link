@@ -3,6 +3,8 @@ from types import ModuleType
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel, QSizePolicy
 
+from open_bilibili_link.logger import LogManager
+
 
 class PluginTile(QFrame):
     def __init__(self, plugin: ModuleType, *args, **kwargs):
@@ -18,7 +20,7 @@ class PluginTile(QFrame):
                 'loaded': plugin.__loaded__,
             }
         except AttributeError:
-            print(f'[Plugin] Unrecognized plugin {plugin}')
+            LogManager.instance().warning(f'[Plugin] 未识别的插件 {plugin}，请检查插件代码')
             self.plugin_info = None
         self.setup_ui()
 

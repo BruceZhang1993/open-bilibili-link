@@ -13,58 +13,60 @@ class CliApp(object):
     async def login(self, *, login_type: str = 'account'):
         f = getattr(self, login_type + '_login')
         if f is None:
-            print(f'未知的登录方式 {login_type} 可选值 [account,cookie]')
+            self.error(f'未定义的登录方式 {login_type} 可选值 [account,cookie]')
             return
         await f()
 
     async def cookie_login(self):
         if BilibiliLiveService().logged_in:
-            print('Already logged in')
+            self.error('当前已登录')
             await BilibiliLiveService().session.close()
             return
         cookie = await timed_input('Cookie:\n')
         save_cookie(cookie, BilibiliLiveService.COOKIE_FILE, '.live.bilibili.com')
-        print('Cookie 登录成功')
+        self.success('Cookie 登录成功')
 
     async def account_login(self):
         if BilibiliLiveService().logged_in:
-            print('Already logged in')
+            self.error('当前已登录')
             await BilibiliLiveService().session.close()
             return
         try:
-            username = await timed_input('Username: ')
-            password = await timed_input('Password: ')
-            print(await BilibiliLiveService().login(username, password))
+            username = await timed_input('用户名: ')
+            password = await timed_input('  密码: ')
+            self.info(await BilibiliLiveService().login(username, password))
         except BilibiliServiceException as e:
-            print(f'[{e.args[0]}] 登录失败，请尝试使用 Cookie 登录 [--login_type=cookie]')
+            self.error(f'[{e.args[0]}] 登录失败，请尝试使用 Cookie 登录 [--login_type=cookie]')
 
     def logout(self):
         if BilibiliLiveService().logged_in:
             BilibiliLiveService().TOKEN_FILE.unlink(missing_ok=True)
-            print('Logged out')
+            BilibiliLiveService().COOKIE_FILE.unlink(missing_ok=True)
+            self.success('已退出登录')
 
     async def checkin(self):
         if not BilibiliLiveService().logged_in:
-            print('Need login')
+            self.error('当前未登录')
             await BilibiliLiveService().session.close()
             return
         try:
-            print(await BilibiliLiveService().checkin())
+            data = await BilibiliLiveService().checkin()
+            self.success(f'{data.text} {data.special_text}')
         except BilibiliServiceException as e:
-            print(e.args)
+            self.error(f'[{e.args[1]}] {e.args[0]}')
 
     def _danmu(self, danmu: DanmuData):
         text = DanmuParser.parse(danmu)
         if text is not None:
-            print(text)
+            self.info(text)
 
     def _danmu_off(self, _, __):
-        print('Gently shutting down...')
+        self.info('正在关闭弹幕连接请耐心等待...')
         BilibiliLiveDanmuService().unregister_callback(self._danmu)
 
     async def danmu(self, roomid: int = 0, *, output: str = 'stdout'):
         if output not in ['stdout', 'file']:
-            print('output must be stdout or file')
+            self.error('未知输出目标 output 取值必须为 stdout,file')
             return
         if roomid == 0:
             roomid = await BilibiliLiveService().roomid
@@ -76,12 +78,12 @@ class CliApp(object):
             BilibiliLiveDanmuService().register_callback(self._danmu, external=False)
         elif output == 'file':
             danmu_pusher = DanmuPusher(roomid)
-            self._danmu = danmu_pusher.append_danmu
+            self._danmu = danmu_pusher.append_danmu # noqa
             BilibiliLiveDanmuService().register_callback(self._danmu, external=False)
         danmus = await BilibiliLiveService().get_danmu_history(roomid)
         for danmu in danmus:
             if output == 'stdout':
-                print(f'{danmu.nickname}: {danmu.text}')
+                self.write_line(f'{danmu.nickname}: {danmu.text}')
             elif output == 'file':
                 danmu_pusher.file.write(f'{danmu.nickname}: {danmu.text}\n')
                 danmu_pusher.file.flush()
@@ -93,3 +95,19 @@ class CliApp(object):
             loop.run_until_complete(BilibiliLiveService().session.close())
         if BilibiliLiveDanmuService().session and not BilibiliLiveDanmuService().session.closed:
             loop.run_until_complete(BilibiliLiveDanmuService().session.close())
+
+    @classmethod
+    def info(cls, message):
+        cls.write_line(message, prefix='[!]')
+
+    @classmethod
+    def success(cls, message):
+        cls.write_line(message, prefix='[✔️️]')
+
+    @classmethod
+    def error(cls, message):
+        cls.write_line(message, prefix='[X]')
+
+    @staticmethod
+    def write_line(message, prefix=''):
+        print(f'{prefix} {message}')

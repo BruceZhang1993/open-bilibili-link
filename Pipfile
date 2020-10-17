@@ -1,6 +1,6 @@
 [[source]]
 name = "pypi"
-url = "https://pypi.org/simple"
+url = "https://pypi.doubanio.com/simple"
 verify_ssl = true
 
 [dev-packages]
@@ -12,8 +12,7 @@ pyqt5 = "*"
 aiohttp = "*"
 rsa = "*"
 pydantic = "*"
-toml = "*"
-PyQtWebEngine = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.8"

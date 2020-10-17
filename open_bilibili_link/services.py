@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import json
 import zlib
 from base64 import b64encode
@@ -12,13 +11,14 @@ from typing import List, Optional
 from urllib.parse import quote_plus
 
 import rsa
-from aiohttp import ClientSession, CookieJar, TraceConfig, TraceRequestStartParams, WSMsgType, WSMessage
-from yarl import URL
+from aiohttp import ClientSession, CookieJar, TraceConfig, TraceRequestStartParams, WSMsgType, WSMessage, \
+    TraceRequestEndParams
 
 from open_bilibili_link import models
+from open_bilibili_link.logger import LogManager
 from open_bilibili_link.models import UserInfoData, RoomInfoData, DanmuKeyResponse, DanmuKeyData, RoomInitResponse, \
     DanmuData, RoomInitData, DanmuHistoryResponse
-from open_bilibili_link.utils import ping, Timer, color_hex_to_int, Singleton, run_command
+from open_bilibili_link.utils import ping, Timer, color_hex_to_int, Singleton
 
 
 def login_required(func):
@@ -78,10 +78,10 @@ class BilibiliBaseService:
         self.cookie_jar = CookieJar()
         self.token_data = None
         if self.TOKEN_FILE.exists():
-            print('Loading token')
+            LogManager.instance().debug('正在加载 token 文件...')
             self.token_data = models.LoginData.parse_file(self.TOKEN_FILE)
         if self.COOKIE_FILE.exists():
-            print('Loading cookie...')
+            LogManager.instance().debug('正在加载 cookie 文件...')
             self.cookie_jar.load(self.COOKIE_FILE)
         self.trace = TraceConfig()
         self.trace.on_connection_create_end.append(self.on_connected)
@@ -92,15 +92,15 @@ class BilibiliBaseService:
 
     @staticmethod
     async def on_connected(_, __, ___):
-        print(f'Connection established.')
+        LogManager.instance().debug(f'网络连接已建立')
 
     @staticmethod
     async def on_request_start(_, __, params: TraceRequestStartParams):
-        print(f'Requesting: [{params.method}] {params.url}')
+        LogManager.instance().debug(f'网络请求: [{params.method}] {params.url}')
 
     @staticmethod
-    async def on_request_end(_, __, ___):
-        print('Request ok.')
+    async def on_request_end(_, __, params: TraceRequestEndParams):
+        LogManager.instance().debug(f'网络请求完成 [{params.response.status}] {await params.response.text()}')
 
     @property
     def logged_in(self):
@@ -172,7 +172,6 @@ class BilibiliBaseService:
         headers = self.DEFAULT_HEADERS
         headers['Content-type'] = 'application/x-www-form-urlencoded'
         async with self.session.post(uri, data=data, headers=headers) as r:
-            print(await r.json())
             res = models.LoginResponse(**(await r.json()))
             if res.code == -105:
                 raise BilibiliServiceException(res.data.url, res.code)
@@ -309,6 +308,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             return data
 
     @property
+    @login_required
     async def roomid(self):
         """
         获取直播间号缓存
@@ -341,17 +341,17 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         """
         uri = f'https://{self.host}/live_user/v1/UserInfo/live_info'
         async with self.session.get(uri, params=self.with_token()) as r:
-            print(self.cookie_jar.filter_cookies(URL(self.host)))
             res = models.LiveInfoResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
             self._roomid = int(res.data.roomid)
             return res.data
 
-    @login_required
-    async def get_room_info(self):
+    async def get_room_info(self, roomid=None):
         uri = f'https://{self.host}/room/v1/Room/get_info'
-        async with self.session.get(uri, params=self.with_token({'room_id': await self.roomid})) as r:
+        async with self.session \
+                .get(uri,
+                     params=self.with_token({'room_id': roomid if roomid is not None else (await self.roomid)})) as r:
             res = models.RoomInfoResponse(**(await r.json()))
             if res.code != 0:
                 raise BilibiliServiceException(res.message, res.code)
@@ -377,7 +377,6 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         :rtype: models.LiveCheckinData
         """
         uri = f'https://{self.host}/xlive/web-ucenter/v1/sign/DoSign'
-        print(self.cookie_jar.filter_cookies(URL(uri)))
         async with self.session.get(uri, params=self.with_token()) as r:
             res = models.LiveCheckinResponse(**(await r.json()))
             if res.code != 0:
@@ -666,7 +665,7 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
         return data
 
     async def send_heatbeat(self):
-        print('[WS] Sending heartbeat package')
+        LogManager.instance().debug('[WebSocket] 正在发送维持心跳包')
         await self.ws.send_bytes(self.encode_payload('[object Object]'))
 
     async def room_init(self, roomid) -> RoomInitData:
@@ -702,14 +701,13 @@ class BilibiliLiveDanmuService(metaclass=Singleton):
                                 else:
                                     loop.run_in_executor(None, cb, danmu)
                             except Exception as err:
-                                print('DanmuPushError: ' + str(err))
+                                LogManager.instance().warning('弹幕分发错误: ' + str(err))
                 else:
-                    print(msg)
+                    LogManager.instance().info('[WebSocket] 接收到未知消息' + msg)
 
 
 async def main():
-    path = await BilibiliLiveService().captcha()
-    asyncio.ensure_future(run_command('xdg-open', path.as_posix(), allow_fail=True))
+    print(await BilibiliLiveService().roomid)
     await BilibiliLiveService().session.close()
 
 

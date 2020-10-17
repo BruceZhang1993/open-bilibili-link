@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from open_bilibili_link.cli import CliApp
+from open_bilibili_link.logger import LogManager
 
 PID_FILE = Path('/') / 'tmp' / 'obl.pid'
 
@@ -36,7 +37,8 @@ def init():
     return parser.parse_args()
 
 
-def main(args):
+def main():
+    args = init()
     if args.command != 'gui':
         try:
             fun = getattr(CliApp(args), args.command)
@@ -49,11 +51,11 @@ def main(args):
                 fun(**params)
             sys.exit(0)
         except AttributeError:
-            print(f'Unknown command: {args.uri}')
+            LogManager.instance().error(f'未知命令: {args.uri}')
             sys.exit(1)
     if PID_FILE.exists():
         pid = PID_FILE.read_text()
-        print(f'Already running on PID {pid}')
+        LogManager.instance().error(f'应用正在运行 {pid}')
         sys.exit(0)
     PID_FILE.parent.mkdir(parents=True, exist_ok=True)
     PID_FILE.write_text(str(os.getpid()))
@@ -71,10 +73,10 @@ def main(args):
             PID_FILE.unlink(missing_ok=True)
             sys.exit(r)
     except Exception as err:
-        print('Fatal error: ' + str(err))
+        LogManager.instance().error(f'未知错误，请上报开发者 {str(err)}')
         PID_FILE.unlink(missing_ok=True)
         sys.exit(1)
 
 
 if __name__ == '__main__':
-    main(init())
+    main()

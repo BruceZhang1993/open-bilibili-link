@@ -6,8 +6,9 @@ from PyQt5.QtCore import Qt, QSize, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QFontMetrics
 from PyQt5.QtWidgets import QDockWidget, QVBoxLayout, QListView, QScrollArea, QStyledItemDelegate, QStyleOptionViewItem, \
     QFrame, QLineEdit
-from asyncqt import asyncClose, asyncSlot
+from asyncqt import asyncSlot
 
+from open_bilibili_link.logger import LogManager
 from open_bilibili_link.models import DanmuData
 from open_bilibili_link.services import BilibiliLiveDanmuService, BilibiliLiveService
 from open_bilibili_link.widgets.components.toast import Toast
@@ -16,7 +17,6 @@ from open_bilibili_link.widgets.components.toast import Toast
 class DanmuParser:
     @staticmethod
     def parse(danmu: DanmuData) -> Optional[str]:
-        print('[WS] Received', danmu.msg_type)
         if danmu.msg_type == BilibiliLiveDanmuService.TYPE_DANMUKU:
             return f'{danmu.name}: {danmu.content}'
         elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_GIFT:
@@ -24,18 +24,26 @@ class DanmuParser:
                    f'x{danmu.content.data.num}'
         elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_ENTER:
             vip_text = ''
-            if danmu.content.data.vip:
+            if hasattr(danmu.content.data, 'vip') and danmu.content.data.vip:
                 vip_text += '[VIP] '
-            if danmu.content.data.svip:
+            if hasattr(danmu.content.data, 'svip') and danmu.content.data.svip:
                 vip_text += '[SVIP] '
-            return f'{vip_text}{danmu.content.data.uname} 进入房间'
+            uname = ''
+            if hasattr(danmu.content.data, 'uname'):
+                uname = danmu.content.data.uname
+            return f'{vip_text}{uname} 进入房间'
         elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_BROADCAST:
-            print('[WS] Received broadcast', danmu.content)
+            LogManager.instance().info('[WebSocket] 接收到广播消息 ' + danmu.content)
         elif danmu.msg_type == BilibiliLiveDanmuService.TYPE_OTHER:
             if isinstance(danmu.content, str) or isinstance(danmu.content, bytes):
-                print('[WS] Received data', danmu.content)
+                return None
             else:
-                print('[WS] Received cmd', danmu.content.cmd)
+                return DanmuParser.parse_cmd(danmu)
+        LogManager.instance().info(f'[WebSocket] 未知消息类型 {danmu.msg_type}')
+        return None
+
+    @staticmethod
+    def parse_cmd(_) -> Optional[str]:
         return None
 
 
