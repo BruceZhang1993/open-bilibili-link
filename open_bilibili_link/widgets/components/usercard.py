@@ -165,7 +165,6 @@ class UserCardLive(QFrame):
             self.label_title_edit.setEnabled(True)
 
     async def set_room_info(self, room_info, news):
-        # self.top_label.setText('直播中' if room_info.live_status else '未开播')
         self.label_roomid.setText(
             f'房间号: {room_info.room_id} <a href="https://live.bilibili.com/{room_info.room_id}">Go</a>')
         self.label_title_content.setText(f'{room_info.title}')

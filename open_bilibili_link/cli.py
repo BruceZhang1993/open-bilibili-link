@@ -11,13 +11,13 @@ class CliApp(object):
         self.args = args
 
     async def login(self, *, login_type: str = 'account'):
-        f = getattr(self, login_type + '_login')
+        f = getattr(self,f'_{login_type}_login')
         if f is None:
             self.error(f'未定义的登录方式 {login_type} 可选值 [account,cookie]')
             return
         await f()
 
-    async def cookie_login(self):
+    async def _cookie_login(self):
         if BilibiliLiveService().logged_in:
             self.error('当前已登录')
             await BilibiliLiveService().session.close()
@@ -26,7 +26,7 @@ class CliApp(object):
         save_cookie(cookie, BilibiliLiveService.COOKIE_FILE, '.live.bilibili.com')
         self.success('Cookie 登录成功')
 
-    async def account_login(self):
+    async def _account_login(self):
         if BilibiliLiveService().logged_in:
             self.error('当前已登录')
             await BilibiliLiveService().session.close()

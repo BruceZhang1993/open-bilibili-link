@@ -100,7 +100,12 @@ class BilibiliBaseService:
 
     @staticmethod
     async def on_request_end(_, __, params: TraceRequestEndParams):
-        LogManager.instance().debug(f'网络请求完成 [{params.response.status}] {await params.response.text()}')
+        # 非文本类型仅输出 content-type 和 content-length
+        if params.response.content_type.startswith('text') or 'json' in params.response.content_type:
+            content = await params.response.text()
+        else:
+            content = f'{params.response.content_type}[{params.response.content_length}]'
+        LogManager.instance().debug(f'网络请求完成 [{params.response.status}] {content}')
 
     @property
     def logged_in(self):

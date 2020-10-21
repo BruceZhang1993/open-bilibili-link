@@ -274,7 +274,7 @@ QPushButton:checked {
 	background: #863fc8;
 }
 
-QLineEdit {
+QLineEdit, QTextEdit {
 	background: transparent;
 	border: 1px solid transparent;
 	color: #d5e8ef;
@@ -453,7 +453,9 @@ QScrollArea {
 #label-title-edit, #label-label-edit { background: transparent; border-bottom-width: 1px; border-bottom-color: skyblue; }
 
 LoginPanel QLineEdit { border-bottom-width: 1px; border-bottom-color: #4b7f87; margin-top: 30px; }
+LoginPanel QTextEdit { border-bottom-width: 1px; border-bottom-color: #4b7f87; margin-top: 30px; }
 LoginPanel QLineEdit:focus { border-bottom-color: #78d1cd; }
+LoginPanel QTextEdit:focus { border-bottom-color: #78d1cd; }
 #login-header { font-weight: 700; color: #78d1cd; font-size: 24px; }
 #login-commit { color: rgba(120, 209, 205, .5); margin-top: 30px; }
 

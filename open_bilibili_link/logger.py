@@ -1,5 +1,6 @@
 import logging
 import logging.config
+import os
 from enum import Enum
 from pathlib import Path
 from typing import Dict
@@ -23,6 +24,11 @@ class LogManager(object):
         with self.LOGGER_FILE.open('r') as f:
             log_config = yaml.safe_load(f)
             if isinstance(log_config, dict):
+                handlers: list = log_config.get('loggers', {}).get(name.value, {}).get('handlers', [])
+                if 'console' in handlers and os.environ.get('OBL_DEBUG', 0) == '1':
+                    handlers.remove('console')
+                    handlers.append('console_debug')
+                    log_config['loggers'][name.value]['handlers'] = handlers
                 base_fname = log_config.get('handlers', {}).get('file', {}).get('filename', None)
                 if base_fname:
                     self.LOG_DIRECTORY.mkdir(parents=True, exist_ok=True)
