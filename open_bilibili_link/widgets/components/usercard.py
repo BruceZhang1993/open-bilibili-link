@@ -123,6 +123,7 @@ class UserCardLive(QFrame):
         self.label_area_edit.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         area_row.addWidget(self.label_area)
         area_row.addWidget(self.label_area_content)
+        area_row.addStretch(1)
         area_row.addWidget(self.label_area_edit)
 
         self.label_tags = QLabel('')
@@ -220,8 +221,9 @@ class UserCard(QFrame):
 
     async def load_info(self):
         if BilibiliLiveService().logged_in:
+            self.main_card.label_username.setText('Loading...')
             self.right_card.label_title.setText('房间标题:')
-            self.right_card.label_area.setText('分区信息:')
+            self.right_card.label_area.setText('分区信息:   ')
             self.right_card.label_title_edit.show()
             self.right_card.label_area_edit.show()
             user_info = await BilibiliLiveService().get_user_info()

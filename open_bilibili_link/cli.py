@@ -2,7 +2,7 @@ import asyncio
 
 from open_bilibili_link.models import DanmuData
 from open_bilibili_link.services import BilibiliLiveService, BilibiliServiceException, BilibiliLiveDanmuService
-from open_bilibili_link.utils import run_command, timed_input, save_cookie
+from open_bilibili_link.utils import timed_input, save_cookie
 from open_bilibili_link.widgets.components.danmu import DanmuPusher, DanmuParser
 
 
@@ -13,60 +13,60 @@ class CliApp(object):
     async def login(self, *, login_type: str = 'account'):
         f = getattr(self,f'_{login_type}_login')
         if f is None:
-            self.error(f'未定义的登录方式 {login_type} 可选值 [account,cookie]')
+            self._error(f'未定义的登录方式 {login_type} 可选值 [account,cookie]')
             return
         await f()
 
     async def _cookie_login(self):
         if BilibiliLiveService().logged_in:
-            self.error('当前已登录')
+            self._error('当前已登录')
             await BilibiliLiveService().session.close()
             return
         cookie = await timed_input('Cookie:\n')
         save_cookie(cookie, BilibiliLiveService.COOKIE_FILE, '.live.bilibili.com')
-        self.success('Cookie 登录成功')
+        self._success('Cookie 登录成功')
 
     async def _account_login(self):
         if BilibiliLiveService().logged_in:
-            self.error('当前已登录')
+            self._error('当前已登录')
             await BilibiliLiveService().session.close()
             return
         try:
             username = await timed_input('用户名: ')
             password = await timed_input('  密码: ')
-            self.info(await BilibiliLiveService().login(username, password))
+            self._info(await BilibiliLiveService().login(username, password))
         except BilibiliServiceException as e:
-            self.error(f'[{e.args[0]}] 登录失败，请尝试使用 Cookie 登录 [--login_type=cookie]')
+            self._error(f'[{e.args[0]}] 登录失败，请尝试使用 Cookie 登录 [--login_type=cookie]')
 
     def logout(self):
         if BilibiliLiveService().logged_in:
             BilibiliLiveService().TOKEN_FILE.unlink(missing_ok=True)
             BilibiliLiveService().COOKIE_FILE.unlink(missing_ok=True)
-            self.success('已退出登录')
+            self._success('已退出登录')
 
     async def checkin(self):
         if not BilibiliLiveService().logged_in:
-            self.error('当前未登录')
+            self._error('当前未登录')
             await BilibiliLiveService().session.close()
             return
         try:
             data = await BilibiliLiveService().checkin()
-            self.success(f'{data.text} {data.special_text}')
+            self._success(f'{data.text} {data.special_text}')
         except BilibiliServiceException as e:
-            self.error(f'[{e.args[1]}] {e.args[0]}')
+            self._error(f'[{e.args[1]}] {e.args[0]}')
 
     def _danmu(self, danmu: DanmuData):
         text = DanmuParser.parse(danmu)
         if text is not None:
-            self.info(text)
+            self._info(text)
 
     def _danmu_off(self, _, __):
-        self.info('正在关闭弹幕连接请耐心等待...')
+        self._info('正在关闭弹幕连接请耐心等待...')
         BilibiliLiveDanmuService().unregister_callback(self._danmu)
 
     async def danmu(self, roomid: int = 0, *, output: str = 'stdout'):
         if output not in ['stdout', 'file']:
-            self.error('未知输出目标 output 取值必须为 stdout,file')
+            self._error('未知输出目标 output 取值必须为 stdout,file')
             return
         if roomid == 0:
             roomid = await BilibiliLiveService().roomid
@@ -83,7 +83,7 @@ class CliApp(object):
         danmus = await BilibiliLiveService().get_danmu_history(roomid)
         for danmu in danmus:
             if output == 'stdout':
-                self.write_line(f'{danmu.nickname}: {danmu.text}')
+                self._write_line(f'{danmu.nickname}: {danmu.text}')
             elif output == 'file':
                 danmu_pusher.file.write(f'{danmu.nickname}: {danmu.text}\n')
                 danmu_pusher.file.flush()
@@ -97,17 +97,17 @@ class CliApp(object):
             loop.run_until_complete(BilibiliLiveDanmuService().session.close())
 
     @classmethod
-    def info(cls, message):
-        cls.write_line(message, prefix='[!]')
+    def _info(cls, message):
+        cls._write_line(message, prefix='[!]')
 
     @classmethod
-    def success(cls, message):
-        cls.write_line(message, prefix='[✔️️]')
+    def _success(cls, message):
+        cls._write_line(message, prefix='[✔️️]')
 
     @classmethod
-    def error(cls, message):
-        cls.write_line(message, prefix='[X]')
+    def _error(cls, message):
+        cls._write_line(message, prefix='[X]')
 
     @staticmethod
-    def write_line(message, prefix=''):
+    def _write_line(message, prefix=''):
         print(f'{prefix} {message}')

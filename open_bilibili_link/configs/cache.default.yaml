@@ -1,0 +1,4 @@
+default:
+  cache: aiocache.SimpleMemoryCache
+  serializer:
+    class: aiocache.serializers.PickleSerializer

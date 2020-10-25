@@ -9,7 +9,7 @@ handlers:
     class: logging.handlers.RotatingFileHandler
     formatter: verbose
     level: DEBUG
-    filename: default.log
+    filename: default.log # Will be saved under log directory
     backupCount: 5
     maxBytes: 1024000
   console_debug:

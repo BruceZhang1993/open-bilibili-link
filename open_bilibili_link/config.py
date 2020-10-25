@@ -29,11 +29,22 @@ class ConfigManager(object, metaclass=Singleton):
             self.load()
         return self._config
 
-    def get(self, *args):
+    def get(self, *args, default=None):
         conf = self.config
         for key in args:
             conf = conf.get(key, {})
-        return conf if conf is not None else None
+        return conf if conf else default
+
+    def remove(self, *args):
+        conf = self.config
+        for key in args[0:-1]:
+            conf = conf.get(key)
+            if conf is None:
+                return False
+        if args[-1] in conf.keys():
+            conf.pop(args[1])
+            return True
+        return False
 
     def save(self):
         with self.fpath.open('w') as f:

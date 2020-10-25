@@ -1,13 +1,11 @@
 import asyncio
 
-from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QPushButton, QApplication
 from asyncqt import asyncSlot
 
 from open_bilibili_link.config import ConfigManager
-from open_bilibili_link.logger import LogManager
 from open_bilibili_link.services import BilibiliLiveService, BilibiliServiceException, BilibiliLiveDanmuService
-from open_bilibili_link.utils import create_obs_configuration, check_exists, run_command
+from open_bilibili_link.utils import create_obs_configuration, check_exists, run_command, ping
 from open_bilibili_link.widgets.components.button import CopyButton
 from open_bilibili_link.widgets.components.danmu import DanmuWidget, DanmuPusher
 from open_bilibili_link.widgets.components.toast import Toast
@@ -45,40 +43,66 @@ class LiveControlCenter(QFrame):
         button_layout = QGridLayout()
         button_layout.setContentsMargins(0, 0, 0, 0)
         self.refresh_live_code = QPushButton('刷新直播码')
+        self.toggle_onekey_live = QPushButton('一键开播')
         self.toggle_live_button = QPushButton('开启直播')
         self.update_obs_config = QPushButton('更新 OBS 配置')
         self.start_obs_studio = QPushButton('启动 OBS')
         self.sign_in_btn = QPushButton('签到')
         self.sign_in_btn.setCheckable(True)
-        test_danmu = QPushButton('弹幕视图')
+        self.test_danmu = QPushButton('弹幕视图')
         test_danmu_txt = QPushButton('开启弹幕输出')
         plugin_page_btn = QPushButton('我的插件')
+        self.ping_test = QPushButton('推流延迟测试')
         self.toggle_live_button.setCheckable(True)
+        self.toggle_onekey_live.setCheckable(True)
+        self.test_danmu.setCheckable(True)
+        self.ping_test.setCheckable(True)
         test_danmu_txt.setCheckable(True)
-        button_layout.addWidget(self.refresh_live_code, 0, 0)
-        button_layout.addWidget(self.toggle_live_button, 0, 1)
-        button_layout.addWidget(self.update_obs_config, 0, 2)
-        button_layout.addWidget(self.start_obs_studio, 0, 3)
-        button_layout.addWidget(self.sign_in_btn, 0, 4)
-        button_layout.addWidget(test_danmu, 1, 0)
-        button_layout.addWidget(test_danmu_txt, 1, 1)
-        button_layout.addWidget(plugin_page_btn, 1, 2)
+        button_layout.addWidget(self.refresh_live_code, 0, 1)
+        button_layout.addWidget(self.toggle_onekey_live, 0, 0)
+        button_layout.addWidget(self.toggle_live_button, 0, 2)
+        button_layout.addWidget(self.update_obs_config, 0, 3)
+        button_layout.addWidget(self.start_obs_studio, 0, 4)
+        button_layout.addWidget(self.sign_in_btn, 1, 0)
+        button_layout.addWidget(self.test_danmu, 1, 1)
+        button_layout.addWidget(test_danmu_txt, 1, 2)
+        button_layout.addWidget(plugin_page_btn, 1, 3)
+        button_layout.addWidget(self.ping_test, 1, 4)
         button_frame = QFrame()
         button_frame.setLayout(button_layout)
         layout.addWidget(button_frame, 2, 0, 3, 0)
         self.setLayout(layout)
         self.refresh_live_code.clicked.connect(self.refresh_code)
         self.toggle_live_button.clicked.connect(self.toggle_live)
+        self.toggle_onekey_live.clicked.connect(self.onekey_live)
         self.update_obs_config.clicked.connect(self.update_obs)
         self.start_obs_studio.clicked.connect(self.start_obs_profile)
         self.live_code_show.clicked.connect(self.toggle_code_show)
         self.sign_in_btn.clicked.connect(self.sign_in)
-        test_danmu.clicked.connect(self.launch_danmu)
+        self.test_danmu.clicked.connect(self.launch_danmu)
         test_danmu_txt.clicked.connect(self.launch_danmu_txt)
         plugin_page_btn.clicked.connect(self.go_plugin_page)
+        self.ping_test.clicked.connect(self.do_ping_test)
 
     def go_plugin_page(self, _):
         self.homepage.context.goto('obl://plugin')
+
+    @asyncSlot()
+    async def do_ping_test(self):
+        if self.ping_test.isChecked():
+            _, exists = await check_exists('ping')
+            if not exists:
+                Toast.toast(self, '未安装 ping 工具')
+                self.ping_test.setChecked(False)
+            else:
+                self.ping_test.setText('正在测试...')
+                self.ping_test.setChecked(True)
+                self.ping_test.setEnabled(False)
+                host, time = await ping(self.live_rtmp.text())
+                Toast.toast(self, f'{host}: {time} ms')
+                self.ping_test.setText('推流延迟测试')
+                self.ping_test.setChecked(False)
+                self.ping_test.setEnabled(True)
 
     def launch_danmu_txt(self):
         if self.danmu_pusher is None:
@@ -94,8 +118,9 @@ class LiveControlCenter(QFrame):
             self.danmu_pusher = None
 
     def launch_danmu(self):
-        danmu_w = DanmuWidget(roomid=self.roomid)
+        danmu_w = DanmuWidget(roomid=self.roomid, toggle_btn=self.test_danmu)
         danmu_w.show_data()
+        self.test_danmu.setChecked(True)
         danmu_w.show()
 
     def toggle_code_show(self, _):
@@ -124,8 +149,7 @@ class LiveControlCenter(QFrame):
         _, exists = await check_exists('obs')
         if not exists:
             Toast.toast(self, '未安装 OBS Studio')
-        _, __, code = await run_command('obs', '--profile', 'BilibiliLive')
-        LogManager.instance().debug(f'[Shell] OBS 命令执行完成（进程结束 exitcode: {code}）')
+        await run_command('obs', '--profile', 'BilibiliLive')
 
     def update_obs(self):
         create_obs_configuration(self.live_rtmp.text().strip(), self.live_code.text().strip())
@@ -141,6 +165,18 @@ class LiveControlCenter(QFrame):
         BilibiliLiveService().live_status = None
         await self.homepage.usercard.load_info()
         await self.load_info()
+
+    @asyncSlot()
+    async def onekey_live(self):
+        if BilibiliLiveService().logged_in:
+            await self.refresh_code()
+            self.update_obs()
+            await self.toggle_live()
+            status = await BilibiliLiveService().live_status
+            if status:
+                await self.start_obs_profile()
+                if ConfigManager().get('live', 'stop_after_obs', default=False):
+                    await self.toggle_live()
 
     @asyncSlot()
     async def refresh_code(self):
@@ -162,6 +198,7 @@ class LiveControlCenter(QFrame):
             self.set_live_code(await BilibiliLiveService().get_live_code())
             self.toggle_live_button.setText('关闭直播' if live_status else '开启直播')
             self.toggle_live_button.setChecked(live_status)
+            self.toggle_onekey_live.setChecked(live_status)
             check_info = await BilibiliLiveService().check_info()
             self.sign_in_btn.setText('已签到' if check_info.status else '签到')
             self.sign_in_btn.setChecked(check_info.status)

@@ -463,3 +463,8 @@ Toast { background: #c0f0e9; color: #3468c8; font-size: 12px; }
 LiveControlCenter, PluginTile { background: deepskyblue; color: white; }
 UserCardMain, UserCardLive { border-bottom-width: 1px; border-bottom-color: skyblue; }
 PluginTile QLabel { color: white; }
+PluginTile QLabel#plugin-name { font-weight: bold; font-size: 16px; }
+PluginTile QLabel#plugin-id { font-style: italic; font-size: 14px; color: #eeeeee; }
+PluginTile QLabel#plugin-desc { font-size: 12px; color: #cccccc; }
+
+PluginTile[pluginloaded="true"] { background: #863fc8; }

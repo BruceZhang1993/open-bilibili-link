@@ -5,7 +5,10 @@ from open_bilibili_link.utils import run_command
 # Plugin metadata
 __plugin_id__ = 'io.github.brucezhang1993.danmu_fuo'
 __plugin_name__ = 'FeelUOwn Danmu'
-__plugin_desc__ = 'FeelUOwn plugin for Bilibili danmu'
+__plugin_desc__ = 'FeelUOwn plugin for Bilibili danmu aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+__plugin_settings__ = {
+    'prefix': (str, '触发关键词', '-', '/FUO'),
+}
 
 # Loaded when plugin found
 __config__: dict = {}

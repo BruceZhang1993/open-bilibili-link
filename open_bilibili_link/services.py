@@ -11,6 +11,7 @@ from typing import List, Optional
 from urllib.parse import quote_plus
 
 import rsa
+from aiocache import cached
 from aiohttp import ClientSession, CookieJar, TraceConfig, TraceRequestStartParams, WSMsgType, WSMessage, \
     TraceRequestEndParams
 
@@ -59,6 +60,9 @@ class BilibiliBaseService:
         'Referer': 'https://link.bilibili.com/p/center/index'
     }
 
+    # 接口缓存时间
+    DEFAULT_TTL = 600
+
     # 接口请求域名
     PASSPORT_API_HOST = 'passport.bilibili.com'
     ACCOUNT_API_HOST = 'account.bilibili.com'
@@ -78,10 +82,10 @@ class BilibiliBaseService:
         self.cookie_jar = CookieJar()
         self.token_data = None
         if self.TOKEN_FILE.exists():
-            LogManager.instance().debug('正在加载 token 文件...')
+            LogManager.instance().debug('[Service] 正在加载 token 文件...')
             self.token_data = models.LoginData.parse_file(self.TOKEN_FILE)
         if self.COOKIE_FILE.exists():
-            LogManager.instance().debug('正在加载 cookie 文件...')
+            LogManager.instance().debug('[Service] 正在加载 cookie 文件...')
             self.cookie_jar.load(self.COOKIE_FILE)
         self.trace = TraceConfig()
         self.trace.on_connection_create_end.append(self.on_connected)
@@ -92,11 +96,11 @@ class BilibiliBaseService:
 
     @staticmethod
     async def on_connected(_, __, ___):
-        LogManager.instance().debug(f'网络连接已建立')
+        LogManager.instance().debug(f'[Network] 网络连接已建立')
 
     @staticmethod
     async def on_request_start(_, __, params: TraceRequestStartParams):
-        LogManager.instance().debug(f'网络请求: [{params.method}] {params.url}')
+        LogManager.instance().debug(f'[Network] 网络请求: [{params.method}] {params.url}')
 
     @staticmethod
     async def on_request_end(_, __, params: TraceRequestEndParams):
@@ -105,7 +109,7 @@ class BilibiliBaseService:
             content = await params.response.text()
         else:
             content = f'{params.response.content_type}[{params.response.content_length}]'
-        LogManager.instance().debug(f'网络请求完成 [{params.response.status}] {content}')
+        LogManager.instance().debug(f'[Network] 网络请求完成 [{params.response.status}] {content}')
 
     @property
     def logged_in(self):
@@ -228,6 +232,7 @@ class BilibiliBaseService:
         raise BilibiliServiceException('csrf not found in cookie', -90003)
 
     @login_required
+    @cached(ttl=DEFAULT_TTL)
     async def get_user_info(self) -> models.UserInfoData:
         """
         获取用户信息
@@ -267,6 +272,9 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
     """
     DEFAULT_PROFILE = 'Bilibili'
 
+    # 接口缓存时间
+    DEFAULT_TTL = 600
+
     def __init__(self):
         super().__init__()
         self.host = self.LIVE_API_HOST
@@ -291,7 +299,8 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         :return: 延迟毫秒数
         :rtype: float
         """
-        return await ping(self.host)
+        _, time_ = await ping(self.host)
+        return time_
 
     @classmethod
     async def get_image(cls, url):
@@ -337,6 +346,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
         self._live_status = v
 
     @login_required
+    @cached(ttl=DEFAULT_TTL)
     async def live_info(self) -> models.LiveInfoData:
         """
         获取我的直播信息 并缓存 room_id
@@ -352,6 +362,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             self._roomid = int(res.data.roomid)
             return res.data
 
+    @cached(ttl=DEFAULT_TTL)
     async def get_room_info(self, roomid=None):
         uri = f'https://{self.host}/room/v1/Room/get_info'
         async with self.session \
@@ -365,6 +376,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             return res.data
 
     @login_required
+    @cached(ttl=DEFAULT_TTL)
     async def check_info(self):
         uri = f'https://{self.host}/xlive/web-ucenter/v1/sign/WebGetSignInfo'
         async with self.session.get(uri, params=self.with_token()) as r:
@@ -388,6 +400,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
                 raise BilibiliServiceException(res.message, res.code)
             return res.data
 
+    @cached(ttl=DEFAULT_TTL)
     async def get_live_areas(self) -> List[models.LiveAreaResponse.LiveAreaCategory]:
         """
         获取直播分区信息
@@ -402,6 +415,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
                 raise BilibiliServiceException(res.message, res.code)
             return res.data
 
+    @cached(ttl=DEFAULT_TTL)
     async def get_history_areas(self, roomid=None) -> List[models.LiveAreaHistoryResponse.HistoryLiveArea]:
         """
         获取历史直播分区信息
@@ -466,6 +480,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
                 raise BilibiliServiceException(res.message, res.code)
 
     @login_required
+    @cached(ttl=DEFAULT_TTL)
     async def get_live_code(self):
         uri = f'https://{self.LIVE_API_HOST}/live_stream/v1/StreamList/get_stream_by_roomId'
         params = self.with_token({'room_id': await self.roomid})
@@ -476,6 +491,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
             return res.data
 
     @login_required
+    @cached(ttl=DEFAULT_TTL)
     async def get_loop_status(self):
         uri = f'https://{self.host}/i/api/round'
         async with self.session.get(uri, params=self.with_token()) as r:
@@ -511,6 +527,7 @@ class BilibiliLiveService(BilibiliBaseService, metaclass=Singleton):
                 raise BilibiliServiceException(res.message, res.code)
             return res.data
 
+    @cached(ttl=DEFAULT_TTL)
     async def get_live_news(self, roomid=None):
         uri = f'https://{self.host}/room_ex/v1/RoomNews/get'
         async with self.session.get(uri, params={'roomid': roomid or (await self.roomid)}) as r:

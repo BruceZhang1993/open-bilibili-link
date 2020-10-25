@@ -5,15 +5,20 @@ import os
 import sys
 from asyncio import iscoroutinefunction
 from pathlib import Path
-from typing import Any
+
+import yaml
+from aiocache import caches
 
 from open_bilibili_link.cli import CliApp
 from open_bilibili_link.logger import LogManager
 
 PID_FILE = Path('/') / 'tmp' / 'obl.pid'
+CACHE_CONFIG = Path(__file__).parent / 'configs' / 'cache.default.yaml'
 
 
 def init():
+    with CACHE_CONFIG.open('r') as f:
+        caches.set_config(yaml.safe_load(f))
     parser = argparse.ArgumentParser(description='Open bilibili link')
     subparsers = parser.add_subparsers(help='Subcommands')
     gui_parser = subparsers.add_parser('gui', help='Gui mode')
@@ -34,11 +39,14 @@ def init():
                 subp.add_argument(param.name, **arg_, type=None if param.annotation == inspect.Parameter.empty else param.annotation,
                                   help=param.name, default=None if param.default == inspect.Parameter.empty else param.default)
         subp.set_defaults(command=i)
-    return parser.parse_args()
+    return parser, parser.parse_args()
 
 
 def main():
-    args = init()
+    parser, args = init()
+    if not hasattr(args, 'command'):
+        parser.print_help()
+        sys.exit(0)
     if args.command != 'gui':
         try:
             fun = getattr(CliApp(args), args.command)

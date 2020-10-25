@@ -14,7 +14,7 @@ setup(
     author_email=AUTHOR_EMAIL,
     description=DESCRIPTION,
     data_files=DATA_FILES,
-    requires=['aiohttp', 'rsa', 'pydantic'],
+    requires=['aiohttp', 'rsa', 'pydantic', 'aiocache'],
     extras_require={
         'gui': ['asyncqt', 'pyqt5'],
     },

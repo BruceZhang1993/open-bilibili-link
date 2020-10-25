@@ -66,6 +66,26 @@ class PluginManager(object, metaclass=Singleton):
                 if file.is_file() and file.name.startswith('obl_'):
                     p = importlib.import_module(file.stem)
                     p.__loaded__ = False
-                    p.__config__ = ConfigManager().get(*(p.__plugin_id__.split('.'))) # noqa
+                    user_config = ConfigManager().get(*(p.__plugin_id__.split('.'))) # noqa
+                    p.__config__ = {}
+                    for k, v in p.__plugin_settings__.items():
+                        type_, title, subtitle, default = v
+                        user_v = user_config.get(k)
+                        try:
+                            if user_v is not None:
+                                try:
+                                    p.__config__[k] = type_(user_v)
+                                except ValueError as e:
+                                    LogManager.instance().warning(f'[Plugin] 加载用户插件设置项类型异常 '
+                                                                  f'需要类型 {str(type_)} '
+                                                                  f'当前 {type(user_v)} 将使用默认值 {str(e)}')
+                                    p.__config__[k] = type_(default)
+                            else:
+                                p.__config__[k] = type_(default)
+                        except ValueError as e:
+                            p.__config__[k] = None
+                            LogManager.instance().warning(f'[Plugin] 加载插件默认设置项类型异常 '
+                                                          f'需要类型 {str(type_)} '
+                                                          f'当前 {type(default)} 将使用 None {str(e)}')
                     self._plugin_list.append(p)
             sys.path.remove(plugin_dir.as_posix())

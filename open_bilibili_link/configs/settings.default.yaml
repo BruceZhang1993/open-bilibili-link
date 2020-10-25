@@ -1,9 +1,10 @@
 live:
   autosign: true
+  stop_after_obs: false
 
 io:
   github:
     brucezhang1993:
       danmu_fuo:
-        auto_start: true
+        autostart: true
         prefix: '/SONG'

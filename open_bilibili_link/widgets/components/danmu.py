@@ -5,7 +5,7 @@ from typing import Optional
 from PyQt5.QtCore import Qt, QSize, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QFontMetrics
 from PyQt5.QtWidgets import QDockWidget, QVBoxLayout, QListView, QScrollArea, QStyledItemDelegate, QStyleOptionViewItem, \
-    QFrame, QLineEdit
+    QFrame, QLineEdit, QPushButton
 from asyncqt import asyncSlot
 
 from open_bilibili_link.logger import LogManager
@@ -81,8 +81,11 @@ class DanmuItemDelegate(QStyledItemDelegate):
 class DanmuWidget(QDockWidget):
     def __init__(self, *args, **kwargs):
         self.roomid = None
+        self.toggle_btn: Optional[QPushButton] = None
         if 'roomid' in kwargs.keys():
             self.roomid = kwargs.pop('roomid')
+        if 'toggle_btn' in kwargs.keys():
+            self.toggle_btn: Optional[QPushButton] = kwargs.pop('toggle_btn')
         super().__init__(*args, **kwargs)
         self.setup_ui()
 
@@ -141,6 +144,8 @@ class DanmuWidget(QDockWidget):
 
     def closeEvent(self, _):
         BilibiliLiveDanmuService().unregister_callback(self.append_danmu)
+        if self.toggle_btn:
+            self.toggle_btn.setChecked(False)
 
     async def load_history(self):
         danmus = await BilibiliLiveService().get_danmu_history(self.roomid)
