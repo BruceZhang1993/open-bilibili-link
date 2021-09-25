@@ -1,6 +1,9 @@
 import importlib
 
+from open_bilibili_link.logger import LogManager
+
 SCHEMA = 'obl://'
+DEFAULT = 'home'
 
 
 class RouteException(Exception):
@@ -10,11 +13,15 @@ class RouteException(Exception):
 class RouteManager:
     @staticmethod
     def parse_uri(uri: str):
-        if not uri.startswith(SCHEMA):
-            raise RouteException('Not a valid uri')
-        segments = uri.replace(SCHEMA, '').split('/')
-        module = importlib.import_module(f'{__package__}.pages.' + '.'.join(segments))
-        return getattr(module, f'{segments[-1].capitalize()}Page')
+        try:
+            if not uri.startswith(SCHEMA):
+                raise RouteException('Not a valid uri')
+            segments = uri.replace(SCHEMA, '').split('/')
+            module = importlib.import_module(f'{__package__}.pages.' + '.'.join(segments))
+            return getattr(module, f'{segments[-1].capitalize()}Page')
+        except ImportError:
+            LogManager.instance().warning(f'Unknown uri: {uri} trying default: {SCHEMA + DEFAULT}')
+            return RouteManager.parse_uri(SCHEMA + DEFAULT)
 
     @staticmethod
     def get_uri_menu(uri: str):

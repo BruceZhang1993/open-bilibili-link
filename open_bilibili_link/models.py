@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, List, Union, Optional
 
 import rsa
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, Field
 
 
 class OBSServiceData(BaseModel):
@@ -258,6 +258,7 @@ class HashKeyResponse(BaseResponse):
 class LoginResponse(BaseResponse):
     class VerifyUrlData(BaseModel):
         url: str
+
     message: Optional[str]
     data: Union[LoginData, VerifyUrlData]
 
@@ -343,8 +344,10 @@ class DanmuHistoryResponse(BaseResponseV2):
             svip: bool
             timeline: datetime.datetime
             text: str
+
         admin: list
         room: List[DanmuHistory]
+
     data: DanmuHistoryData
 
 
@@ -355,6 +358,7 @@ class LiveAreaHistoryResponse(BaseResponseV2):
         parent_id: int
         parent_name: str
         act_flag: int
+
     data: List[HistoryLiveArea]
 
 
@@ -431,3 +435,9 @@ class DanmuData(BaseModel):
     roomid: Optional[int]
     raw: Optional[dict]
     content: Union[DanmuContent, str, bytes]
+
+
+# Configurations
+class LiveConfiguration(BaseModel):
+    autosign: bool = Field(title='自动签到（直播）', description='是否开启直播自动签到', default=False)
+    stop_after_obs: bool = Field(title='自动停播', description='OBS 退出后自动停止直播', default=False)

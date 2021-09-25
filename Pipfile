@@ -8,12 +8,9 @@ pyqt5-stubs = "*"
 
 [packages]
 asyncqt = "*"
-pyqt5 = "*"
+PyQt5 = "*"
 aiohttp = "*"
 rsa = "*"
 pydantic = "*"
 pyyaml = "*"
 aiocache = "*"
-
-[requires]
-python_version = "3.8"
