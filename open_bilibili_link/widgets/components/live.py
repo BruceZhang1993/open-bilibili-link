@@ -1,7 +1,7 @@
 import asyncio
 
-from PyQt5.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QPushButton, QApplication
-from asyncqt import asyncSlot
+from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QLineEdit, QPushButton, QApplication
+from qasync import asyncSlot
 
 from open_bilibili_link.config import ConfigManager
 from open_bilibili_link.services import BilibiliLiveService, BilibiliServiceException, BilibiliLiveDanmuService

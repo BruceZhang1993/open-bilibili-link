@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, QSize, QAbstractItemModel, QItemSelection
-from PyQt5.QtWidgets import QListView, QWidget, QVBoxLayout, QFrame, QSizePolicy
-from asyncqt import QtGui
+from PySide6.QtCore import Qt, QSize, QAbstractItemModel, QItemSelection
+from PySide6.QtWidgets import QListView, QWidget, QVBoxLayout, QFrame, QSizePolicy
+from qasync import QtGui
 
 
 class MenuFrame(QFrame):

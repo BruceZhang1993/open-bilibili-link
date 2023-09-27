@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "open-bilibili-link"
+version = "0.1.0"
+description = "Open Bilibili Link made with Qt"
+authors = ["Bruce Zhang <zttt183525594@gmail.com>"]
+license = "LGPL3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+qasync = {version = "*", optional = true}
+pyside6 = {version = "*", optional = true}
+aiohttp = "*"
+rsa = "*"
+pydantic = "*"
+pyyaml = "*"
+aiocache = "*"
+
+[tool.poetry.extras]
+gui = ["qasync", "pyside6"]
+
+[tool.poetry.group.dev.dependencies]
+pyqt5-stubs = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+open-bilibili-link = "open_bilibili_link.__main__:main"

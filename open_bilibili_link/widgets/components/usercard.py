@@ -3,11 +3,11 @@ from datetime import timezone
 from pprint import pprint
 from typing import Optional
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QPixmap, QPainter
-from PyQt5.QtWidgets import QFrame, QHBoxLayout, QSizePolicy, QVBoxLayout, QGridLayout, QLabel, QPushButton, \
+from PySide6.QtCore import Qt, Signal as pyqtSignal
+from PySide6.QtGui import QPixmap, QPainter
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QSizePolicy, QVBoxLayout, QGridLayout, QLabel, QPushButton, \
     QLineEdit
-from asyncqt import asyncSlot
+from qasync import asyncSlot
 
 from open_bilibili_link.services import BilibiliLiveService
 from open_bilibili_link.widgets.components.areas import AreaSelector

@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QPushButton, QScrollArea, QSizePolicy, QGridLayout
-from asyncqt import asyncSlot
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton, QScrollArea, QSizePolicy, QGridLayout
+from qasync import asyncSlot
 
 from open_bilibili_link.services import BilibiliLiveService
 from open_bilibili_link.widgets.components.live import LiveControlCenter

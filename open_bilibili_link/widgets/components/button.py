@@ -1,8 +1,8 @@
 import asyncio
 from typing import Optional
 
-from PyQt5.QtWidgets import QPushButton, QLineEdit, QApplication
-from asyncqt import asyncSlot
+from PySide6.QtWidgets import QPushButton, QLineEdit, QApplication
+from qasync import asyncSlot
 
 from open_bilibili_link.widgets.components.toast import Toast
 

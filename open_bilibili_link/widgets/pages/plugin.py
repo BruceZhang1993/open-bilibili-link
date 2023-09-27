@@ -1,7 +1,7 @@
 from typing import get_type_hints
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFrame, QGridLayout
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QFrame, QGridLayout
 
 from open_bilibili_link.plugin import PluginManager
 from open_bilibili_link.utils import reset_style

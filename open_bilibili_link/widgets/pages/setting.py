@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QPushButton
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QPushButton
 
 from open_bilibili_link.config import ConfigManager
 from open_bilibili_link.models import LiveConfiguration

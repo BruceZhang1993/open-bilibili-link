@@ -1,4 +1,6 @@
 import atexit
+import shutil
+
 import yaml
 from pathlib import Path
 from typing import Optional
@@ -9,12 +11,13 @@ from open_bilibili_link.utils import Singleton
 
 class ConfigManager(object, metaclass=Singleton):
     CONFIG_FILE = Path.home() / '.config' / 'OBL' / 'settings.yaml'
+    DEFAULT_CONFIG_FILE = Path(__file__).parent / 'configs' / 'settings.default.yaml'
 
     def __init__(self, fpath: Path = None):
         self.fpath = fpath if fpath is not None else self.CONFIG_FILE
         if not self.fpath.exists():
-            self.fpath.parent.mkdir(parents=True)
-            self.fpath.touch()
+            self.fpath.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(self.DEFAULT_CONFIG_FILE, self.fpath)
         self._config: Optional[dict] = None
 
     def load(self):

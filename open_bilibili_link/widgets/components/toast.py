@@ -1,8 +1,8 @@
 import asyncio
 
-from PyQt5.QtCore import QTimerEvent, Qt
-from PyQt5.QtGui import QShowEvent
-from PyQt5.QtWidgets import QMessageBox, QWidget, QApplication
+from PySide6.QtCore import QTimerEvent, Qt
+from PySide6.QtGui import QShowEvent
+from PySide6.QtWidgets import QMessageBox, QWidget, QApplication
 
 
 class Toast(QMessageBox):

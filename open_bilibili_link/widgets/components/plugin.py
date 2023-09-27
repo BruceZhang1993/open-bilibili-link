@@ -1,7 +1,7 @@
 from types import ModuleType
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QLabel, QSizePolicy
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QSizePolicy
 
 from open_bilibili_link.logger import LogManager
 

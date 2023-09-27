@@ -18,7 +18,6 @@ class OBSServiceData(BaseModel):
 
 
 class BaseResponse(BaseModel):
-    ts: int
     code: int
     data: Any
 

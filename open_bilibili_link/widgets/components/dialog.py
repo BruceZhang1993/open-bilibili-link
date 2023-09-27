@@ -1,11 +1,12 @@
 import asyncio
 from pathlib import Path
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap, QPainter
-from PyQt5.QtSvg import QSvgRenderer, QSvgWidget
-from PyQt5.QtWidgets import QVBoxLayout, QLabel, QLineEdit, QDialog, QSizePolicy, QTextEdit
-from asyncqt import asyncSlot, asyncClose
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QImage, QPixmap, QPainter
+from PySide6.QtSvg import QSvgRenderer
+from PySide6.QtSvgWidgets import QSvgWidget
+from PySide6.QtWidgets import QVBoxLayout, QLabel, QLineEdit, QDialog, QSizePolicy, QTextEdit
+from qasync import asyncSlot, asyncClose
 
 from open_bilibili_link.services import BilibiliLiveService, BilibiliServiceException
 from open_bilibili_link.utils import save_cookie

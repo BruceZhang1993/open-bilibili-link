@@ -63,16 +63,17 @@ def main():
             sys.exit(1)
     if PID_FILE.exists():
         pid = PID_FILE.read_text()
-        LogManager.instance().error(f'应用正在运行 {pid}')
+        LogManager.instance().error(f'应用正在运行 PID:{pid}')
         sys.exit(0)
     PID_FILE.parent.mkdir(parents=True, exist_ok=True)
     PID_FILE.write_text(str(os.getpid()))
     try:
-        import asyncqt
-        from PyQt5.QtWidgets import QWidget, QMainWindow
+        os.environ['QT_API'] = 'PySide6'
+        import qasync
+        app = qasync.QApplication(sys.argv)
+        from PySide6.QtWidgets import QWidget, QMainWindow
         from open_bilibili_link.widgets.main import AppMainWindow
-        app = asyncqt.QApplication(sys.argv)
-        loop = asyncqt.QEventLoop(app)
+        loop = qasync.QEventLoop(app)
         asyncio.set_event_loop(loop)
         win = AppMainWindow(app, args)
         win.show()
@@ -81,6 +82,8 @@ def main():
             PID_FILE.unlink(missing_ok=True)
             sys.exit(r)
     except Exception as err:
+        import traceback
+        traceback.print_exc()
         LogManager.instance().error(f'未知错误，请上报开发者 {str(err)}')
         PID_FILE.unlink(missing_ok=True)
         sys.exit(1)

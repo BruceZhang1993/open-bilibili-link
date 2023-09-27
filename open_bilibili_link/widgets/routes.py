@@ -19,8 +19,9 @@ class RouteManager:
             segments = uri.replace(SCHEMA, '').split('/')
             module = importlib.import_module(f'{__package__}.pages.' + '.'.join(segments))
             return getattr(module, f'{segments[-1].capitalize()}Page')
-        except ImportError:
-            LogManager.instance().warning(f'Unknown uri: {uri} trying default: {SCHEMA + DEFAULT}')
+        except ImportError as e:
+            LogManager.instance().warning(f'Unknown uri: {uri}: {str(e)}')
+            LogManager.instance().warning(f'trying default: {SCHEMA + DEFAULT}')
             return RouteManager.parse_uri(SCHEMA + DEFAULT)
 
     @staticmethod

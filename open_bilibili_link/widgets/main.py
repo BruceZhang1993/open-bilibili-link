@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from PyQt5.QtCore import QItemSelection, Qt
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QFrame, QHBoxLayout, QListView, QSizePolicy, QApplication
-from asyncqt import asyncClose
+from PySide6.QtCore import QItemSelection, Qt
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QIcon
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QFrame, QHBoxLayout, QListView, QSizePolicy, QApplication
+from qasync import asyncClose
 
 from open_bilibili_link.services import BilibiliLiveService, BilibiliLiveDanmuService
 from open_bilibili_link.widgets.menu import MenuView, MenuFrame

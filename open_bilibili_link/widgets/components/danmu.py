@@ -2,11 +2,11 @@ import asyncio
 from pathlib import Path
 from typing import Optional
 
-from PyQt5.QtCore import Qt, QSize, QModelIndex
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QFontMetrics
-from PyQt5.QtWidgets import QDockWidget, QVBoxLayout, QListView, QScrollArea, QStyledItemDelegate, QStyleOptionViewItem, \
+from PySide6.QtCore import Qt, QSize, QModelIndex
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QFontMetrics
+from PySide6.QtWidgets import QDockWidget, QVBoxLayout, QListView, QScrollArea, QStyledItemDelegate, QStyleOptionViewItem, \
     QFrame, QLineEdit, QPushButton
-from asyncqt import asyncSlot
+from qasync import asyncSlot
 
 from open_bilibili_link.logger import LogManager
 from open_bilibili_link.models import DanmuData

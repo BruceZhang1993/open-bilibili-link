@@ -1,6 +1,6 @@
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QPainter, QFont, QBrush, QColor, QMouseEvent
-from PyQt5.QtWidgets import QLabel
+from PySide6.QtCore import Signal as pyqtSignal, Qt
+from PySide6.QtGui import QPainter, QFont, QBrush, QColor, QMouseEvent
+from PySide6.QtWidgets import QLabel
 
 
 class QClickableLabel(QLabel):

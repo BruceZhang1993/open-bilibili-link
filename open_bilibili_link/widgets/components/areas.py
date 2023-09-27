@@ -2,9 +2,9 @@ import asyncio
 from pathlib import Path
 from typing import List
 
-from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QMouseEvent
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QTabWidget, QFrame, QGridLayout, QSizePolicy
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QMouseEvent
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QTabWidget, QFrame, QGridLayout, QSizePolicy
 
 from open_bilibili_link.models import LiveAreaResponse, LiveAreaHistoryResponse
 from open_bilibili_link.services import BilibiliLiveService
