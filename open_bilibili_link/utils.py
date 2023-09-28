@@ -68,7 +68,7 @@ def create_obs_configuration(rtmp, key, profile='BilibiliLive'):
         'key': key,
     })
     with (target / 'service.json').open('w') as f:
-        f.write(service.json(indent=4))
+        f.write(service.model_dump_json(indent=4))
         f.flush()
 
 
